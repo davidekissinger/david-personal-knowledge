@@ -1,54 +1,40 @@
 # Personal Knowledge — CareNova
 
-A private, read-only evidence-search pilot. Version 0.2.0.
+Private evidence search with an optional, approval-gated answer layer. Version 0.3.0.
 
-## Implemented
+## What this release contains
 
-- Email/password sign-in with Supabase Auth; no public signup form.
-- Server-side token verification and explicit single-owner approval.
-- Database row-level security, read-only grants, and owner-consistent foreign keys.
-- Source catalog, full-text passage retrieval, source-passage viewer, and decision history.
-- Revoked sources and deleted records are excluded. Superseded records are excluded from search unless requested.
-- In-memory sessions, 15-minute idle sign-out, bounded requests, no-store responses, and restrictive browser headers.
-- No source-account mutations, import endpoint, AI provider calls, or privileged runtime keys.
+- Existing owner-approved Supabase sign-in and read-only archive access.
+- Keyword search, source-passage viewer, source catalog and decision history.
+- A separate **Ask AI** tab: natural-language question -> evidence preview -> explicit approval -> cited answer.
+- Up to eight selected excerpts, bounded linked-decision context, and a fingerprint that rejects stale approval.
+- Server-side OpenAI Responses API integration; no browser API key and no service-role credential.
+- Model calls disabled by default. Preview and keyword search remain usable without an API key.
+- Source-ID and quotation checks; these do not independently verify an interpretation.
+- No uploader, automatic source synchronization, model training, or persistent conversational memory.
 
-**This is not yet a complete personal AI or an exhaustive archive.** Search returns exact source excerpts, not generated answers. No application identity has been enrolled and no personal records have been imported. A real sign-in and first deployed request still require validation.
+The app is not an exhaustive personal archive. It can only retrieve imported, accessible passages. A historical source snapshot is not evidence of current runtime state. Generated text is not automatically saved as a fact or confirmed decision.
 
-## Run and test
+## Run
 
-Use Node.js 22.16 or newer in the Node 22 series.
+Node.js 22.16+ is required.
 
 ```sh
 npm install
-npm test
-npm run build
+npm run check
 npm run dev
 ```
 
-The dependency-free unit tests run with Node's TypeScript stripping. The build copies only the public asset allowlist into `dist`. Netlify bundles the TypeScript functions; its type package is a development dependency. `npm install` and the Netlify deployment must be validated in a network-enabled environment. A dependency lockfile has not yet been generated.
+Existing Netlify project: `david-personal-knowledge`. Repository: `davidekissinger/david-personal-knowledge`, branch `main`. Build: `npm run check`. Publish directory: `dist`. Functions: `netlify/functions`.
 
-## Deployment
+Keep `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` available to Functions. Keep the Netlify team-login restriction and the Supabase owner gate enabled. Never store personal records, exports or secrets in this repository.
 
-Use the EXISTING `david-personal-knowledge` Netlify project, not a new site.
-Connect `davidekissinger/david-personal-knowledge`, branch `main`.
-Build command: `npm run check`. Publish directory: `dist`.
-Function directory: `netlify/functions` (set by `netlify.toml`).
+## Activate optional answers
 
-Keep the existing Netlify team-login restriction enabled. Scope the two variables below to **Functions** (Builds may remain enabled):
+See **docs/AI_ANSWERS.md** before enabling external processing. Add `PK_OPENAI_API_KEY` directly in Netlify as a Functions-scoped secret and set `PK_AI_ENABLED=true`; redeploy. Leave generation disabled until provider billing and data handling are approved. Each model request also requires in-app evidence approval. No key is needed for previews.
 
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_PUBLISHABLE_KEY`
+Default model: `gpt-4.1-mini-2025-04-14`. API usage is separately billed. `store:false` is not a zero-retention guarantee. No patient records in this pilot.
 
-Only the publishable key belongs here. Do not add a service-role key. No AI key is needed.
+38 local Node tests passed using synthetic/mocked services, and the asset build passed. Real model output quality and browser behavior after deployment still require validation. Local browser navigation was blocked by the execution environment. No real provider calls were made during development.
 
-## Identity setup
-
-The Supabase project is separate from ClinicalSOS. In its Authentication > Users dashboard, create the owner's application account with an email and password. Provision it through the trusted administrator UI; do not place a password in chat, code, or SQL. Disable public new-user signup in Auth configuration.
-
-After independently confirming the intended user's Auth UUID, an administrator can bind that UUID to the singleton row in `private.app_control`. No user can approve themselves through the API. Leave the owner unset until the correct account is confirmed. See `docs/HANDOFF.md`.
-
-## Data handling
-
-Never commit original documents, chat exports, patient records, mailbox exports, tokens, or credentials. `.gitignore` includes common private-data locations, but it is not a substitute for reviewing each commit. Source citations are only as reliable as future imports; preserve speaker, date, version, locator, and correction relationships. Treat completed or sent records as closed. Do not infer follow-up communication.
-
-Before any import: validate the deployed owner and non-owner paths, review the data scope, and add a controlled importer in a separate reviewed change. Do not enable broad database writes merely to make an import work.
+Database migrations in the repository describe the earlier foundation. This release adds no database migration and does not change owner approval, archive contents, or database write grants. The original database AI flags remain legacy read-only metadata; the new authenticated answer-status endpoint reports optional generation readiness.

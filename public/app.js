@@ -1,3 +1,4 @@
+import { createAnswers } from './answers.js';
 const $ = id => document.getElementById(id);
 let configuration = null;
 let session = null;
@@ -10,7 +11,7 @@ function element(tag, text, className) { const node = document.createElement(tag
 function date(value) { if (!value) return 'Not recorded'; const d = new Date(value); return Number.isNaN(d.getTime()) ? 'Not recorded' : d.toLocaleString(); }
 function empty(id, text) { $(id).replaceChildren(element('p', text, 'empty')); }
 function resetWorkspace() {
-  generation++; session = null; clearTimeout(expiryTimer);
+  generation++; session = null; clearTimeout(expiryTimer); answers.reset();
   $('workspace').hidden = true; $('login-view').hidden = false; $('password').value = '';
   for (const id of ['search-results', 'source-list', 'decision-list', 'evidence-content', 'account-email', 'evidence-locator']) $(id).replaceChildren();
   for (const id of ['source-count', 'record-count', 'passage-count', 'decision-count']) $(id).textContent = '—';
@@ -29,13 +30,14 @@ async function signOut(note = 'You have signed out.') {
 async function api(action, payload) {
   if (!session) throw new Error('Please sign in.');
   const currentGeneration = generation;
-  const response = await fetch(payload ? '/api/knowledge' : `/api/knowledge?action=${encodeURIComponent(action)}`, {
-    method: payload ? 'POST' : 'GET', cache: 'no-store', signal: AbortSignal.timeout(15000),
+  const endpoint = action.startsWith('answer-') ? '/api/answer' : '/api/knowledge';
+  const response = await fetch(payload ? endpoint : `${endpoint}?action=${encodeURIComponent(action)}`, {
+    method: payload ? 'POST' : 'GET', cache: 'no-store', signal: AbortSignal.timeout(action.startsWith('answer-') ? 60000 : 15000),
     headers: { Authorization: `Bearer ${session.accessToken}`, ...(payload ? { 'Content-Type': 'application/json' } : {}) },
     ...(payload ? { body: JSON.stringify({ ...payload, action }) } : {}),
   });
   let data;
-  try { data = await response.json(); } catch { throw new Error('The application service is unavailable.'); }
+  try { data = await response.json(); } catch { throw new Error(response.status === 429 ? 'Too many requests. Wait a minute before trying again.' : 'The application service is unavailable.'); }
   if (generation !== currentGeneration) throw new Error('Session changed. Please sign in again.');
   if (response.status === 401 || response.status === 403) {
     await signOut(data.error || 'Please sign in again.');
@@ -45,14 +47,16 @@ async function api(action, payload) {
   return data;
 }
 async function showEvidence(id) {
+  const currentGeneration = generation;
   $('evidence-content').replaceChildren(); $('evidence-locator').textContent = '';
   message('evidence-message', 'Loading source passage…'); $('evidence-dialog').showModal();
   try {
     const { passage } = await api('passage', { id });
+    if (generation !== currentGeneration) return;
     $('evidence-locator').textContent = passage.citation_locator || `Passage ${passage.ordinal + 1}`;
     $('evidence-content').textContent = passage.content;
     message('evidence-message');
-  } catch (error) { message('evidence-message', error.message, true); }
+  } catch (error) { if (generation === currentGeneration) message('evidence-message', error.message, true); }
 }
 function evidenceButton(id) { const b = element('button', 'Read source passage', 'secondary'); b.type = 'button'; b.addEventListener('click', () => showEvidence(id)); return b; }
 function sourceLink(value) {
@@ -72,8 +76,9 @@ function renderSearch(rows) {
 }
 async function loadView(name) {
   for (const item of document.querySelectorAll('[data-view]')) { if (item.dataset.view === name) item.setAttribute('aria-current', 'page'); else item.removeAttribute('aria-current'); }
-  for (const view of ['ask', 'sources', 'decisions']) $(`view-${view}`).hidden = view !== name;
+  for (const view of ['ask', 'answer', 'sources', 'decisions']) $(`view-${view}`).hidden = view !== name;
   message('workspace-message');
+  if (name === 'answer') return answers.open();
   if (name === 'ask') return;
   const container = name === 'sources' ? 'source-list' : 'decision-list';
   empty(container, 'Loading…');
@@ -95,6 +100,7 @@ async function loadView(name) {
     }
   } catch (error) { empty(container, 'The records could not be loaded. No coverage conclusion can be drawn from this error.'); message('workspace-message', error.message, true); }
 }
+const answers = createAnswers({ api, showEvidence });
 $('login-form').addEventListener('submit', async event => {
   event.preventDefault(); if (!configuration) return;
   $('login-button').disabled = true; message('login-message', 'Signing in…');
