@@ -1,0 +1,15 @@
+node_modules/
+.netlify/
+dist/
+.env
+.env.*
+!.env.example
+.DS_Store
+private-data/
+imports/
+exports/
+*.zip
+*.pem
+*.key
+*.log
+playwright-results/
