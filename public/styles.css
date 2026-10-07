@@ -3,7 +3,7 @@
 /* Search headlines toggle the authorized source passage inline. */
 .search-result{padding:0;min-width:0;border-top:0}
 .search-result h3{margin:0;font-size:14px;min-width:0}
-.evidence-card .result-toggle{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;min-height:28px;padding:3px 0;background:transparent;color:var(--navy);border:0;border-radius:3px;font:inherit;font-weight:700;text-align:left;overflow-wrap:anywhere}
+.evidence-card .result-toggle{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;min-height:24px;padding:1px 0;background:transparent;color:var(--navy);border:0;border-radius:3px;font:inherit;font-weight:700;text-align:left;overflow-wrap:anywhere}
 .result-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#1558b0;text-decoration:underline;text-underline-offset:3px}
 .result-date{flex:0 0 auto;color:var(--muted);font-size:12px;font-weight:400;white-space:nowrap}
 .result-toggle[aria-expanded=true] .result-title{white-space:normal}
