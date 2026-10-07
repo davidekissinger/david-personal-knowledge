@@ -13,3 +13,13 @@ exports/
 *.key
 *.log
 playwright-results/
+private-archive/
+__pycache__/
+*.pyc
+*.jsonl
+conversations*.json
+chat.html
+inventory.json
+rejected.json
+manifest.json
+sql-*/
