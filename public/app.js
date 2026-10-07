@@ -69,8 +69,40 @@ function renderSearch(rows) {
   if (!rows.length) { empty('search-results', 'No matching passages were found in the accessible indexed records. This does not establish what is in files that have not been imported.'); return; }
   for (const row of rows) {
     const card = element('article', undefined, 'evidence-card');
-    card.append(element('span', row.record_status, 'status-tag'), element('h3', row.title || 'Untitled record'), element('p', `${row.source_name} · ${row.author_name || 'Author not recorded'} · ${date(row.occurred_at)}`, 'meta'), element('p', row.excerpt, 'excerpt'), element('p', row.citation_locator || 'Locator not recorded', 'meta'), evidenceButton(row.passage_id));
-    const link = sourceLink(row.source_uri); if (link) { const p = element('p'); p.append(link); card.append(p); }
+    const heading = element('h3');
+    const toggle = element('button', row.title || 'Untitled record', 'result-toggle');
+    toggle.type = 'button'; toggle.setAttribute('aria-expanded', 'false');
+    const body = element('div', undefined, 'result-body');
+    body.id = `search-passage-${row.passage_id}`; body.hidden = true;
+    toggle.setAttribute('aria-controls', body.id); heading.append(toggle);
+    const content = element('p', '', 'excerpt');
+    const locator = element('p', '', 'meta');
+    const status = element('p', '', 'message'); status.setAttribute('role', 'status');
+    body.append(status, content, locator);
+    const link = sourceLink(row.source_uri); if (link) { const p = element('p'); p.append(link); body.append(p); }
+    let requestVersion = 0;
+    toggle.addEventListener('click', async () => {
+      const version = ++requestVersion;
+      const currentGeneration = generation;
+      const expanded = toggle.getAttribute('aria-expanded') !== 'true';
+      toggle.setAttribute('aria-expanded', String(expanded)); body.hidden = !expanded;
+      content.textContent = ''; locator.textContent = ''; status.textContent = '';
+      status.classList.remove('error');
+      if (!expanded) return;
+      status.textContent = 'Loading source passage…';
+      try {
+        const { passage } = await api('passage', { id: row.passage_id });
+        if (generation !== currentGeneration || version !== requestVersion || !card.isConnected) return;
+        content.textContent = passage.content;
+        locator.textContent = passage.citation_locator || 'Locator not recorded';
+        status.textContent = '';
+      } catch (error) {
+        if (generation !== currentGeneration || version !== requestVersion || !card.isConnected) return;
+        status.textContent = `${error.message} Collapse and expand to try again.`;
+        status.classList.add('error');
+      }
+    });
+    card.append(element('span', row.record_status, 'status-tag'), heading, element('p', `${row.source_name} · ${row.author_name || 'Author not recorded'} · ${date(row.occurred_at)}`, 'meta'), body);
     $('search-results').append(card);
   }
 }
