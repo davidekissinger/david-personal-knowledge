@@ -203,6 +203,82 @@ class ImportTests(unittest.TestCase):
         b = self.export([conversation("\x00"), conversation(updated=True)])
         self.assertEqual(ingest.validate_bundle(b)["rejected"], 2)
 
+    def extracted(self):
+        inputs = self.root / "inputs"
+        inputs.mkdir()
+        shard = inputs / "conversations-000.json"
+        shard.write_text(json.dumps([conversation()]))
+        manifest = self.root / "export_manifest.json"
+        manifest.write_text(json.dumps({"export_files": [
+            {"path": shard.name, "size_bytes": shard.stat().st_size},
+            {"path": "attachment.dat", "size_bytes": 123}]}))
+        provenance = self.root / "provenance.json"
+        provenance.write_text(json.dumps({"archive_uri": "gdrive:synthetic-folder",
+            "original_zip_uri": "gdrive:synthetic-zip", "manifest_uri": "gdrive:synthetic-manifest",
+            "files": {shard.name: "gdrive:synthetic-shard"}}))
+        return inputs, manifest, provenance
+
+    def test_extracted_shards_keep_exact_file_provenance_and_revision_identity(self):
+        args = self.extracted()
+        b = ingest.prepare_extracted(*args, self.archive)
+        m = ingest.validate_bundle(b)
+        r = self.record(b)
+        z = ingest.normalize_conversation(conversation(), "conversations.json", 0, "a" * 64)
+        self.assertEqual(r["content_hash"], z["content_hash"])
+        self.assertEqual(m["original_zip_integrity"], "not_verified")
+        self.assertEqual(m["export_hash_kind"], "extracted_receipt_sha256")
+        self.assertEqual(r["observation"]["source_uri"], "gdrive:synthetic-shard")
+        self.assertTrue(r["passages"][0]["citation_locator"].startswith("file-sha256:"))
+        self.assertEqual(m["declared_export_file_count"], 2)
+        self.assertEqual(ingest.prepare_extracted(*args, self.archive), b)
+        self.assertEqual(len(list(ingest.make_sql(b, OWNER).glob("*.sql"))), 2)
+        (b / "inputs/conversations-000.json").write_text("[]")
+        with self.assertRaises(ingest.ImportErrorSafe):
+            ingest.validate_bundle(b)
+
+    def test_extracted_missing_or_truncated_shard_fails_closed(self):
+        args = self.extracted()
+        shard = args[0] / "conversations-000.json"
+        shard.write_text("[]")
+        with self.assertRaises(ingest.ImportErrorSafe):
+            ingest.prepare_extracted(*args, self.archive)
+        shard.unlink()
+        with self.assertRaises(ingest.ImportErrorSafe):
+            ingest.prepare_extracted(*args, self.archive)
+
+    def test_extracted_signed_urls_and_manifest_path_traversal_rejected(self):
+        args = self.extracted()
+        provenance = json.loads(args[2].read_text())
+        provenance["files"]["conversations-000.json"] = "https://example.invalid/?token=synthetic"
+        args[2].write_text(json.dumps(provenance))
+        with self.assertRaises(ingest.ImportErrorSafe):
+            ingest.prepare_extracted(*args, self.archive)
+        manifest = json.loads(args[1].read_text())
+        manifest["export_files"].append({"path": "../outside", "size_bytes": 1})
+        args[1].write_text(json.dumps(manifest))
+        with self.assertRaises(ingest.ImportErrorSafe):
+            ingest.prepare_extracted(*args, self.archive)
+
+    def test_changed_batch_limits_use_distinct_retry_ids(self):
+        convs = []
+        for i in range(10):
+            c = conversation("x" * 10000)
+            c["id"] = f"synthetic-plan-{i}"
+            convs.append(c)
+        bundle = self.export(convs)
+        small = ingest.make_sql(bundle, OWNER, 80000)
+        large = ingest.make_sql(bundle, OWNER, 150000)
+        self.assertNotEqual(small, large)
+        def payload(path):
+            encoded = path.read_text().split("decode('", 1)[1].split("','hex')", 1)[0]
+            return json.loads(bytes.fromhex(encoded))
+        a = payload(small / "000000.sql")
+        b = payload(large / "000000.sql")
+        self.assertNotEqual(a["run_id"], b["run_id"])
+        self.assertNotEqual(a["batch_count"], b["batch_count"])
+        self.assertTrue(all(p.stat().st_size <= 80000 for p in small.glob("*.sql")))
+        self.assertEqual(ingest.validate_bundle(bundle)["records"], 10)
+
 
 if __name__ == "__main__":
     unittest.main()

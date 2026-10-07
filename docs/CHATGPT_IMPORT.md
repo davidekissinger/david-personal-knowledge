@@ -4,7 +4,7 @@ The web application remains read-only. The new operator tool prepares a local pr
 
 ## Current checkpoint
 
-Implementation and synthetic validation are complete. The export email was accessible, but direct download returned HTTP 422. That response does not establish whether the link expired. No actual ZIP, real export inventory, or new personal records were obtained or imported. The supported fallback is to download the export from the original email while signed in to the requesting ChatGPT account. Do not paste the signed link into an issue, source file, or log.
+The operator importer supports original ZIPs and extracted conversation files retained in a private Drive archive. The extracted path has been exercised against a real sharded export. Import counts, private archive references, input hashes, and verification receipts belong only in the private archive and Supabase, never in this repository. Direct Gmail download can fail independently of link expiration; large ZIPs can also exceed connector limits. Do not paste signed links into source files, issues, or logs.
 
 ## Private archive
 
@@ -34,6 +34,40 @@ The source ZIP must also be outside Git. Copy a platform-provided temporary down
 
 ## Parsing and provenance
 
+### Extracted files when a ZIP exceeds the connector limit
+
+Upload the original ZIP and its extracted folder to the existing private archive. This avoids chat attachment limits. A Drive upload does not imply that a connector can download the entire ZIP: use raw file fetching with `include_base64=false` for the individual conversation shards.
+
+First inventory every uploaded relative path and byte size against `export_manifest.json`, including nested folders. Then download every declared top-level conversation JSON shard into a private directory outside Git. Verify readable JSON and exact declared sizes. The importer copies and SHA-256 hashes those bytes before parsing. Size reconciliation of other files is **not** a checksum or readability verification of their contents.
+
+Prepare a private provenance file with the following structure; substitute existing Drive IDs. This file must never be committed:
+
+```json
+{
+  "archive_uri": "gdrive:EXTRACTED_FOLDER_ID",
+  "original_zip_uri": "gdrive:ORIGINAL_ZIP_FILE_ID",
+  "manifest_uri": "gdrive:EXPORT_MANIFEST_FILE_ID",
+  "files": {
+    "conversations-000.json": "gdrive:CONVERSATION_FILE_ID"
+  }
+}
+```
+
+Include every declared conversation shard in `files`. Run:
+
+```sh
+python scripts/chatgpt_import.py prepare-extracted /private/staging/shards \
+  --export-manifest /private/staging/export_manifest.json \
+  --provenance /private/staging/provenance.json \
+  --archive-dir /private/archive/chatgpt
+```
+
+The generated bundle retains the exact conversation inputs, original export manifest, source receipt, inventory, records, and rejection report. Its `export_sha256` field is explicitly tagged `extracted_receipt_sha256`: it identifies the canonical receipt, **not the original ZIP**. `original_zip_integrity` remains `not_verified`. Each observation stores the exact file SHA-256 and stable Drive reference; citations use `file-sha256:` plus the source filename, JSON pointer, and character range. Snapshot identity is identical to the ZIP path, preserving cross-format deduplication and revision history.
+
+Retain the generated audit bundle in the same private archive. Source files and populated SQL must never enter Git. A receipt marked complete means supported conversations were processed; attachments and alternate branches are still archive-only. The original ZIP's integrity remains unverified until it can be read and checked independently.
+
+### Original ZIP parsing
+
 Supported input is a JSON array in `conversations.json` or numbered `conversations-1.json` / `conversations_1.json` members, optionally under a directory. This is tested support, not a claim about an unseen export's exact layout. An unrecognized archive is inventoried but cannot produce SQL. A recognized JSON file with an incompatible schema stops preparation.
 
 Each conversation follows parent links from `current_node` to its root. Only recognized `text` and `multimodal_text` string parts authored by `user` or `assistant` on that selected branch are searchable. System/tool messages, attachments, binary media, unknown content types, and alternate branches remain in the ZIP and are counted as omitted from the search index. No OCR, transcription, attachment URL fetching, HTML execution, or inferred facts are added. Assistant passages are labeled as assistant text, not confirmed user decisions. The `decisions` table is untouched.
@@ -52,6 +86,10 @@ python scripts/chatgpt_import.py sql /private/archive/chatgpt/ZIP_SHA256 \
 ```
 
 Execute the numbered `.sql` files in order using the authorized Supabase operator connection. These files contain encoded personal records and must never be committed, pasted into an issue, or placed under `supabase/migrations`. When using `psql`, keep connection credentials in the existing secure credential mechanism and use `-v ON_ERROR_STOP=1 -f PRIVATE_FILE`. Authorized Supabase SQL tooling can execute the same transactions without acquiring a service-role key for the application.
+
+For a connector with a smaller request-body limit, add `--max-sql-bytes 3000000`. SQL output directories and run IDs include a deterministic batch-plan hash. Changing the batch size therefore cannot accidentally reuse an old committed batch's ID for different records. Reprocessing the complete input under a new plan safely reuses existing revisions; finalization checks all runs in that plan. Keep the original files for retries. A single conversation larger than the selected limit still fails closed.
+
+When transporting generated SQL through a command-output bridge, read bounded chunks and verify every chunk length plus the reconstructed file size before execution. Do not send truncated output or print database error contexts containing encoded personal records. Verify all imported content and citation hashes after finalization, together with owner/non-owner visibility, unchanged client grants, and existing feature gates.
 
 Each transaction:
 
@@ -85,7 +123,7 @@ python tests/ingestion_db_check.py --owner VERIFIED_EXISTING_OWNER_UUID \
 
 The integration script requires that the importer source has not yet been created. Run it through authorized SQL tooling; it uses synthetic content, checks deduplication, observations, revision order, partial completion, revoked-source/wrong-owner rejection, deletion preservation, owner/non-owner visibility, and denied client writes. All fixtures roll back. It does not change the owner binding or any grants. Never remove its initial isolation check to run it over a populated source.
 
-Validated on 2026-10-07: 18 Python tests, 38 existing Node tests, public asset build, and the rollback-only integration checks against the existing project. Follow-up database checks verified original row counts and client grants. The real export, large-export runtime, and restore from the user's durable archive remain unverified.
+Validation includes 22 Python tests, 38 existing Node tests, the public asset build, and rollback-only synthetic integration checks against the existing project. The extracted-file path has also completed a real import with exact content/citation reconciliation and owner/non-owner access checks. Private run details remain in the archive. Full original-ZIP integrity and attachment-content readability are not established by those checks.
 
 Before publishing importer changes, explicitly stage only code/documentation and run `python scripts/check_private_artifacts.py`. This scans staged Git content for known export artifacts, signed download links, and populated import SQL. It supplements private paths and ignore rules; it is not a complete personal-data or secrets detector.
 
