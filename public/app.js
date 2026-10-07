@@ -68,9 +68,18 @@ function renderSearch(rows) {
   $('search-results').replaceChildren();
   if (!rows.length) { empty('search-results', 'No matching passages were found in the accessible indexed records. This does not establish what is in files that have not been imported.'); return; }
   for (const row of rows) {
-    const card = element('article', undefined, 'evidence-card');
+    const card = element('article', undefined, 'evidence-card search-result');
     const heading = element('h3');
-    const toggle = element('button', row.title || 'Untitled record', 'result-toggle');
+    const title = row.title || 'Untitled record';
+    const toggle = element('button', undefined, 'result-toggle');
+    const headline = element('span', title, 'result-title');
+    headline.title = title;
+    const occurred = row.occurred_at ? new Date(row.occurred_at) : null;
+    const shortDate = occurred && !Number.isNaN(occurred.getTime())
+      ? occurred.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Undated';
+    const dateLabel = element('span', shortDate, 'result-date');
+    dateLabel.title = date(row.occurred_at);
+    toggle.append(headline, dateLabel);
     toggle.type = 'button'; toggle.setAttribute('aria-expanded', 'false');
     const body = element('div', undefined, 'result-body');
     body.id = `search-passage-${row.passage_id}`; body.hidden = true;
@@ -78,7 +87,9 @@ function renderSearch(rows) {
     const content = element('p', '', 'excerpt');
     const locator = element('p', '', 'meta');
     const status = element('p', '', 'message'); status.setAttribute('role', 'status');
-    body.append(status, content, locator);
+    body.append(element('span', row.record_status, 'status-tag'),
+      element('p', `${row.source_name} · ${row.author_name || 'Author not recorded'} · ${date(row.occurred_at)}`, 'meta'),
+      status, content, locator);
     const link = sourceLink(row.source_uri); if (link) { const p = element('p'); p.append(link); body.append(p); }
     let requestVersion = 0;
     toggle.addEventListener('click', async () => {
@@ -102,7 +113,7 @@ function renderSearch(rows) {
         status.classList.add('error');
       }
     });
-    card.append(element('span', row.record_status, 'status-tag'), heading, element('p', `${row.source_name} · ${row.author_name || 'Author not recorded'} · ${date(row.occurred_at)}`, 'meta'), body);
+    card.append(heading, body);
     $('search-results').append(card);
   }
 }
