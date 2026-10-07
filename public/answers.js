@@ -1,6 +1,11 @@
 // No credentials, archive contents, or conversation state are persisted by this module.
 export function createAnswers({ api, showEvidence }) {
   const make = (tag, text, cls) => { const node = document.createElement(tag); if (text !== undefined) node.textContent = text; if (cls) node.className = cls; return node; };
+  const sourceDetails = locator => {
+    const details = make('details', undefined, 'source-details');
+    details.append(make('summary', 'Source details'), make('p', locator || 'Locator not recorded', 'meta'));
+    return details;
+  };
   const nav = document.querySelector('.tabs');
   const tab = make('button', 'Ask AI'); tab.dataset.view = 'answer'; nav.append(tab);
   const panel = make('section', undefined, 'panel'); panel.id = 'view-answer'; panel.hidden = true;
@@ -50,7 +55,7 @@ export function createAnswers({ api, showEvidence }) {
       else {
         for (const source of result.evidence) {
           const card = make('article', undefined, 'evidence-card'); const details = make('details');
-          details.append(make('summary', `${source.id} · ${source.title}`), make('p', `${source.sourceName} · ${source.author || 'Author not recorded'} · ${source.date || 'Date not recorded'} · ${source.recordStatus}`, 'meta'), make('p', source.locator, 'meta'), make('p', source.excerpt, 'excerpt'));
+          details.append(make('summary', `${source.id} · ${source.title}`), make('p', `${source.sourceName} · ${source.author || 'Author not recorded'} · ${source.date || 'Date not recorded'} · ${source.recordStatus}`, 'meta'), make('p', source.excerpt, 'excerpt'), sourceDetails(source.locator));
           for (const decision of source.decisions) details.append(make('p', `Recorded decision (${decision.status}; effective ${decision.effectiveAt || 'not recorded'}): ${decision.statement}`), make('p', decision.rationale, 'fine'));
           const citation = result.citations.find(c => c.id === source.id);
           const button = make('button', 'Read source passage', 'secondary'); button.type = 'button'; button.addEventListener('click', () => { void showEvidence(citation.passageId); });
@@ -73,7 +78,7 @@ export function createAnswers({ api, showEvidence }) {
         const card = make('article', undefined, 'evidence-card'); card.append(make('p', claim.text));
         for (const citation of claim.citations) {
           const match = answer.citations.find(c => c.id === citation.source);
-          const details = make('details'); details.append(make('summary', `Evidence ${citation.source}`), make('p', citation.quote, 'excerpt'), make('p', match.locator, 'meta'));
+          const details = make('details'); details.append(make('summary', `Evidence ${citation.source}`), make('p', citation.quote, 'excerpt'), sourceDetails(match.locator));
           const button = make('button', 'Read source passage', 'secondary'); button.type = 'button'; button.addEventListener('click', () => { void showEvidence(match.passageId); }); details.append(button); card.append(details);
         }
         output.append(card);

@@ -17,6 +17,10 @@
 @media(pointer:coarse){.evidence-card .result-toggle{min-height:44px}}
 
 /* Follow the user's system appearance, including changes while the app is open. */
+.source-details{margin:8px 0;font-size:12px}
+.source-details>summary{cursor:pointer;color:#1558b0;text-decoration:underline;text-underline-offset:3px;width:fit-content}
+.source-details>summary:focus-visible{outline:3px solid #2b898d;outline-offset:3px}
+.source-details>.meta{margin:8px 0;overflow-wrap:anywhere}
 :root{color-scheme:light dark}
 @media(prefers-color-scheme:dark){
   :root{color:#e3edf4;background:#101820;--navy:#e3edf4;--teal:#70d1cf;--muted:#afbeca;--line:#384a58}
@@ -34,7 +38,7 @@
   .principles{border-left-color:#659f96}
   .excerpt{color:#d1dfe9}
   .message.error{color:#ffb3ad}
-  .result-title{color:#8dbdff}
+  .result-title,.source-details>summary{color:#8dbdff}
   .result-toggle:hover .result-title{color:#bad7ff}
   button:focus-visible,input:focus-visible,a:focus-visible,summary:focus-visible{outline-color:#8bdedb}
   dialog::backdrop{background:#000a}

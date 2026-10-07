@@ -18,6 +18,7 @@ function resetWorkspace() {
   for (const id of ['workspace-message', 'search-message', 'evidence-message']) message(id);
   $('question').value = ''; $('include-history').checked = false;
   if ($('evidence-dialog').open) $('evidence-dialog').close();
+  $('evidence-details').open = false; $('evidence-details').hidden = true;
 }
 async function signOut(note = 'You have signed out.') {
   const previous = session;
@@ -49,11 +50,13 @@ async function api(action, payload) {
 async function showEvidence(id) {
   const currentGeneration = generation;
   $('evidence-content').replaceChildren(); $('evidence-locator').textContent = '';
+  $('evidence-details').open = false; $('evidence-details').hidden = true;
   message('evidence-message', 'Loading source passage…'); $('evidence-dialog').showModal();
   try {
     const { passage } = await api('passage', { id });
     if (generation !== currentGeneration) return;
     $('evidence-locator').textContent = passage.citation_locator || `Passage ${passage.ordinal + 1}`;
+    $('evidence-details').hidden = false;
     $('evidence-content').textContent = passage.content;
     message('evidence-message');
   } catch (error) { if (generation === currentGeneration) message('evidence-message', error.message, true); }
@@ -86,10 +89,13 @@ function renderSearch(rows) {
     toggle.setAttribute('aria-controls', body.id); heading.append(toggle);
     const content = element('p', '', 'excerpt');
     const locator = element('p', '', 'meta');
+    const sourceDetails = element('details', undefined, 'source-details');
+    sourceDetails.hidden = true;
+    sourceDetails.append(element('summary', 'Source details'), locator);
     const status = element('p', '', 'message'); status.setAttribute('role', 'status');
     body.append(element('span', row.record_status, 'status-tag'),
       element('p', `${row.source_name} · ${row.author_name || 'Author not recorded'} · ${date(row.occurred_at)}`, 'meta'),
-      status, content, locator);
+      status, content, sourceDetails);
     const link = sourceLink(row.source_uri); if (link) { const p = element('p'); p.append(link); body.append(p); }
     let requestVersion = 0;
     toggle.addEventListener('click', async () => {
@@ -98,6 +104,7 @@ function renderSearch(rows) {
       const expanded = toggle.getAttribute('aria-expanded') !== 'true';
       toggle.setAttribute('aria-expanded', String(expanded)); body.hidden = !expanded;
       content.textContent = ''; locator.textContent = ''; status.textContent = '';
+      sourceDetails.open = false; sourceDetails.hidden = true;
       status.classList.remove('error');
       if (!expanded) return;
       status.textContent = 'Loading source passage…';
@@ -106,6 +113,7 @@ function renderSearch(rows) {
         if (generation !== currentGeneration || version !== requestVersion || !card.isConnected) return;
         content.textContent = passage.content;
         locator.textContent = passage.citation_locator || 'Locator not recorded';
+        sourceDetails.hidden = false;
         status.textContent = '';
       } catch (error) {
         if (generation !== currentGeneration || version !== requestVersion || !card.isConnected) return;
