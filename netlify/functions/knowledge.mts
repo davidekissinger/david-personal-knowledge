@@ -10,7 +10,7 @@ export default async (request: Request) => {
       const body = await readJson(request);
       if (body.action === 'search') {
         const params = searchInput(body);
-        const results = await client.call('/rest/v1/rpc/search_passages', { method: 'POST', body: JSON.stringify(params) });
+        const results = await client.call('/rest/v1/rpc/search_passages_recent', { method: 'POST', body: JSON.stringify(params) });
         return json({ mode: 'evidence-only', results, limit: 20, generatedAnswer: null });
       }
       if (body.action === 'passage') {

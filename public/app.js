@@ -131,7 +131,7 @@ $('search-form').addEventListener('submit', async event => {
   try {
     const data = await api('search', { query: $('question').value.trim(), includeHistory: $('include-history').checked });
     renderSearch(data.results);
-    message('search-message', `${data.results.length} result${data.results.length === 1 ? '' : 's'} shown, up to ${data.limit}. These are source excerpts, not an exhaustive review or an AI-generated answer.`);
+    message('search-message', `${data.results.length} result${data.results.length === 1 ? '' : 's'} shown, up to ${data.limit}, newest to oldest by record date. These are source excerpts, not an exhaustive review or an AI-generated answer.`);
   } catch (error) { message('search-message', error.message, true); }
   finally { $('search-button').disabled = false; }
 });
