@@ -36,6 +36,6 @@ See **docs/AI_ANSWERS.md** before enabling external processing. Add `PK_OPENAI_A
 
 Default model: `gpt-4.1-mini-2025-04-14`. API usage is separately billed. `store:false` is not a zero-retention guarantee. No patient records in this pilot.
 
-38 Node tests, 18 Python importer tests, and the asset build passed. The importer also passed rollback-only synthetic integration checks against the existing Supabase project. The actual export could not be downloaded in this session, so its contents and import totals remain unverified. No real provider calls were made for this work.
+38 Node tests, 22 Python importer tests, and the asset build passed. The importer also passed rollback-only synthetic integration checks against the existing Supabase project. A real extracted export has been imported with exact content/citation reconciliation and owner/non-owner access checks. Private counts and audit evidence remain in the private archive and Supabase. Full original-ZIP integrity and attachment-content readability remain unverified. No real provider calls were made for this work.
 
 Database migrations in the repository describe the earlier foundation. The operator importer adds no database migration or client write grants. It checks the existing approved, confirmed owner before every transaction. The frontend remains version 0.3.0; its import flags describe the unavailable browser import path. The original database AI flags remain legacy read-only metadata; the authenticated answer-status endpoint reports optional generation readiness.
