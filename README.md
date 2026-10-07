@@ -11,7 +11,8 @@ Private evidence search with an optional, approval-gated answer layer. Version 0
 - Server-side OpenAI Responses API integration; no browser API key and no service-role credential.
 - Model calls disabled by default. Preview and keyword search remain usable without an API key.
 - Source-ID and quotation checks; these do not independently verify an interpretation.
-- No uploader, automatic source synchronization, model training, or persistent conversational memory.
+- An offline, operator-run ChatGPT export preparer and owner-checked SQL importer. See **docs/CHATGPT_IMPORT.md**.
+- No browser uploader, automatic source synchronization, model training, or persistent conversational memory.
 
 The app is not an exhaustive personal archive. It can only retrieve imported, accessible passages. A historical source snapshot is not evidence of current runtime state. Generated text is not automatically saved as a fact or confirmed decision.
 
@@ -35,6 +36,6 @@ See **docs/AI_ANSWERS.md** before enabling external processing. Add `PK_OPENAI_A
 
 Default model: `gpt-4.1-mini-2025-04-14`. API usage is separately billed. `store:false` is not a zero-retention guarantee. No patient records in this pilot.
 
-38 local Node tests passed using synthetic/mocked services, and the asset build passed. Real model output quality and browser behavior after deployment still require validation. Local browser navigation was blocked by the execution environment. No real provider calls were made during development.
+38 Node tests, 22 Python importer tests, and the asset build passed. The importer also passed rollback-only synthetic integration checks against the existing Supabase project. A real extracted export has been imported with exact content/citation reconciliation and owner/non-owner access checks. Private counts and audit evidence remain in the private archive and Supabase. Full original-ZIP integrity and attachment-content readability remain unverified. No real provider calls were made for this work.
 
-Database migrations in the repository describe the earlier foundation. This release adds no database migration and does not change owner approval, archive contents, or database write grants. The original database AI flags remain legacy read-only metadata; the new authenticated answer-status endpoint reports optional generation readiness.
+Database migrations in the repository describe the earlier foundation. The operator importer adds no database migration or client write grants. It checks the existing approved, confirmed owner before every transaction. The frontend remains version 0.3.0; its import flags describe the unavailable browser import path. The original database AI flags remain legacy read-only metadata; the authenticated answer-status endpoint reports optional generation readiness.
