@@ -15,3 +15,27 @@
 .result-body .message:empty{display:none}
 @media(max-width:650px){.evidence-card .result-toggle{gap:8px}.result-date{font-size:10px}}
 @media(pointer:coarse){.evidence-card .result-toggle{min-height:44px}}
+
+/* Follow the user's system appearance, including changes while the app is open. */
+:root{color-scheme:light dark}
+@media(prefers-color-scheme:dark){
+  :root{color:#e3edf4;background:#101820;--navy:#e3edf4;--teal:#70d1cf;--muted:#afbeca;--line:#384a58}
+  .topbar,.panel,.stats,dialog,.skip{background:#18242f}
+  .brand-mark{background:#24465e;color:#fff}
+  button{background:#126d70;border-color:#398f92;color:#fff}
+  button.secondary{border-color:#647b89}
+  input:not([type=checkbox]){background:#111e28;border-color:#647b89;color:var(--navy)}
+  input::placeholder{color:#9bafbe;opacity:1}
+  .badge{background:#203d3e}
+  .badge.subtle{background:#2a3742}
+  .status-tag{background:#203d3e;color:#a6dfcd}
+  .callout{background:#1c3038;border-left-color:#659f96}
+  .empty{background:#14212b;border-color:#4e6878}
+  .principles{border-left-color:#659f96}
+  .excerpt{color:#d1dfe9}
+  .message.error{color:#ffb3ad}
+  .result-title{color:#8dbdff}
+  .result-toggle:hover .result-title{color:#bad7ff}
+  button:focus-visible,input:focus-visible,a:focus-visible,summary:focus-visible{outline-color:#8bdedb}
+  dialog::backdrop{background:#000a}
+}
