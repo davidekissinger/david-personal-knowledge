@@ -22,4 +22,10 @@ chat.html
 inventory.json
 rejected.json
 manifest.json
+export_manifest.json
+provenance.json
+source-receipt.json
+drive-inventory.json
+verification-report.json
+chatgpt-ingestion-*.json
 sql-*/

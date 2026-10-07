@@ -11,7 +11,10 @@ for path in filter(None, paths):
     p = PurePosixPath(path)
     name = p.name.lower()
     forbidden = (name.endswith((".zip", ".jsonl", ".pem", ".key", ".log"))
-                 or name in {"chat.html", "inventory.json", "manifest.json", "rejected.json"}
+                 or name in {"chat.html", "inventory.json", "manifest.json", "rejected.json",
+                             "export_manifest.json", "provenance.json", "source-receipt.json",
+                             "drive-inventory.json", "verification-report.json"}
+                 or (name.startswith("chatgpt-ingestion-") and name.endswith(".json"))
                  or re.fullmatch(r"conversations(?:[-_]\d+)?\.json", name)
                  or any(part in {"private-data", "private-archive", "exports", "imports"} for part in p.parts))
     content = subprocess.check_output(["git", "show", ":" + path])
