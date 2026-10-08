@@ -51,6 +51,14 @@ test('approved user requests preserve their bearer and publishable key', async (
 test('upstream errors do not disclose raw service responses', async () => {
   await assert.rejects(() => connect(signedRequest(), env, async () => new Response('sensitive upstream detail', { status: 500 })), e => e.status === 503 && !e.message.includes('sensitive'));
 });
+test('database timeouts have a useful message without exposing the query or retrying', async () => {
+  let calls = 0;
+  await assert.rejects(() => connect(signedRequest(), env, async () => {
+    calls++;
+    return Response.json({ code: '57014', message: 'sensitive query contents', details: 'private details' }, { status: 500 });
+  }), e => e.status === 504 && e.message === 'The data request timed out. Please try again.');
+  assert.equal(calls, 1);
+});
 test('JSON bodies have size, type and origin limits', async () => {
   assert.deepEqual(await readJson(jsonRequest({ action: 'search' })), { action: 'search' });
   await assert.rejects(() => readJson(jsonRequest({ q: 'x'.repeat(17000) })), e => e.status === 413);
@@ -87,3 +95,4 @@ test('production frontend has no data import or AI generation request', async ()
   const source = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
   assert.doesNotMatch(source, /api\.openai\.com|api\.anthropic\.com|\/api\/import|signUp\(/);
 });
+

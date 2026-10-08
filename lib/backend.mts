@@ -12,7 +12,12 @@ export async function connect(request: Request, read: (name: string) => string |
     } catch { throw new AppError(503, 'The data service is temporarily unavailable.'); }
     if (response.status === 401) throw new AppError(401, 'Your session expired. Please sign in again.');
     if (response.status === 403) throw new AppError(403, 'This account is not approved for the archive.');
-    if (!response.ok) throw new AppError(503, 'The data request could not be completed.');
+    if (!response.ok) {
+      let code: unknown;
+      try { code = (await response.json()).code; } catch { /* Do not expose upstream details. */ }
+      if (code === '57014') throw new AppError(504, 'The data request timed out. Please try again.');
+      throw new AppError(503, 'The data request could not be completed.');
+    }
     try { return await response.json(); } catch { throw new AppError(503, 'The data service returned an invalid response.'); }
   }
   // Authoritative Auth lookup: never trust a decoded browser token alone.
@@ -22,3 +27,4 @@ export async function connect(request: Request, read: (name: string) => string |
   if (access?.approved !== true) throw new AppError(403, 'Your account exists, but owner approval is still required.');
   return { call, user };
 }
+
