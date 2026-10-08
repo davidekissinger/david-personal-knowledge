@@ -1,4 +1,5 @@
 import { createAnswers } from './answers.js';
+import { resultRow, newestFirst, orderControl } from './list-ui.js';
 const $ = id => document.getElementById(id);
 let configuration = null;
 let session = null;
@@ -71,22 +72,7 @@ function renderSearch(rows) {
   $('search-results').replaceChildren();
   if (!rows.length) { empty('search-results', 'No matching passages were found in the accessible indexed records. This does not establish what is in files that have not been imported.'); return; }
   for (const row of rows) {
-    const card = element('article', undefined, 'evidence-card search-result');
-    const heading = element('h3');
-    const title = row.title || 'Untitled record';
-    const toggle = element('button', undefined, 'result-toggle');
-    const headline = element('span', title, 'result-title');
-    headline.title = title;
-    const occurred = row.occurred_at ? new Date(row.occurred_at) : null;
-    const shortDate = occurred && !Number.isNaN(occurred.getTime())
-      ? occurred.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Undated';
-    const dateLabel = element('span', shortDate, 'result-date');
-    dateLabel.title = date(row.occurred_at);
-    toggle.append(headline, dateLabel);
-    toggle.type = 'button'; toggle.setAttribute('aria-expanded', 'false');
-    const body = element('div', undefined, 'result-body');
-    body.id = `search-passage-${row.passage_id}`; body.hidden = true;
-    toggle.setAttribute('aria-controls', body.id); heading.append(toggle);
+    const { card, body, toggle } = resultRow(row.title, row.occurred_at);
     const content = element('p', '', 'excerpt');
     const locator = element('p', '', 'meta');
     const sourceDetails = element('details', undefined, 'source-details');
@@ -101,8 +87,7 @@ function renderSearch(rows) {
     toggle.addEventListener('click', async () => {
       const version = ++requestVersion;
       const currentGeneration = generation;
-      const expanded = toggle.getAttribute('aria-expanded') !== 'true';
-      toggle.setAttribute('aria-expanded', String(expanded)); body.hidden = !expanded;
+      const expanded = toggle.getAttribute('aria-expanded') === 'true';
       content.textContent = ''; locator.textContent = ''; status.textContent = '';
       sourceDetails.open = false; sourceDetails.hidden = true;
       status.classList.remove('error');
@@ -121,7 +106,6 @@ function renderSearch(rows) {
         status.classList.add('error');
       }
     });
-    card.append(heading, body);
     $('search-results').append(card);
   }
 }
@@ -137,21 +121,26 @@ async function loadView(name) {
     const { rows } = await api(name);
     $(container).replaceChildren();
     if (!rows.length) { empty(container, name === 'sources' ? 'No sources have been cataloged for this account.' : 'No accessible decision entries are recorded.'); return; }
-    for (const row of rows) {
-      const card = element('article', undefined, name === 'sources' ? 'source-card' : 'decision-card');
+    const getDate = row => name === 'sources' ? row.created_at : row.effective_at;
+    $(container).append(element('p', name === 'sources' ? 'Newest first by date cataloged.' : 'Newest first by effective date. Undated entries appear last.', 'fine'));
+    for (const row of newestFirst(rows, getDate)) {
+      const { card, body } = resultRow(name === 'sources' ? row.source_name : row.statement, getDate(row), name === 'sources' ? 'Date cataloged' : 'Effective date');
       if (name === 'sources') {
-        card.append(element('span', row.sync_status, 'status-tag'), element('h3', row.source_name), element('p', `Type: ${row.source_type} · Last sync: ${date(row.last_synced_at)}`, 'meta'));
+        body.append(element('span', row.sync_status, 'status-tag'), element('p', `Type: ${row.source_type} · Cataloged: ${date(row.created_at)} · Last sync: ${date(row.last_synced_at)}`, 'meta'));
       } else {
-        card.append(element('span', row.status, 'status-tag'), element('h3', row.statement), element('p', `Effective: ${date(row.effective_at)}${row.supersedes_id ? ' · Linked to an earlier decision' : ''}`, 'meta'));
-        if (row.rationale) card.append(element('p', row.rationale));
-        if (row.supporting_passage_id) card.append(evidenceButton(row.supporting_passage_id));
-        else card.append(element('p', 'No supporting passage is attached. Treat this as an unsupported entry.', 'meta'));
+        body.append(element('span', row.status, 'status-tag'), element('p', `Effective: ${date(row.effective_at)}${row.supersedes_id ? ' · Linked to an earlier decision' : ''}`, 'meta'));
+        if (row.rationale) body.append(element('p', row.rationale));
+        if (row.supporting_passage_id) body.append(evidenceButton(row.supporting_passage_id));
+        else body.append(element('p', 'No supporting passage is attached. Treat this as an unsupported entry.', 'meta'));
       }
       $(container).append(card);
     }
   } catch (error) { empty(container, 'The records could not be loaded. No coverage conclusion can be drawn from this error.'); message('workspace-message', error.message, true); }
 }
 const answers = createAnswers({ api, showEvidence });
+const searchOrder = orderControl('search-order');
+$('search-form').append(searchOrder.container);
+searchOrder.select.addEventListener('change', () => { if ($('question').value.trim().length >= 2) $('search-form').requestSubmit(); });
 $('login-form').addEventListener('submit', async event => {
   event.preventDefault(); if (!configuration) return;
   $('login-button').disabled = true; message('login-message', 'Signing in…');
@@ -177,14 +166,16 @@ $('login-form').addEventListener('submit', async event => {
   } finally { $('login-button').disabled = !configuration; }
 });
 $('search-form').addEventListener('submit', async event => {
-  event.preventDefault(); $('search-button').disabled = true; message('search-message', 'Searching accessible indexed records…');
+  event.preventDefault(); if ($('search-button').disabled) return;
+  const order = searchOrder.select.value;
+  $('search-button').disabled = true; searchOrder.select.disabled = true; message('search-message', 'Searching accessible indexed records…');
   $('search-results').replaceChildren();
   try {
-    const data = await api('search', { query: $('question').value.trim(), includeHistory: $('include-history').checked });
+    const data = await api('search', { query: $('question').value.trim(), includeHistory: $('include-history').checked, order });
     renderSearch(data.results);
-    message('search-message', `${data.results.length} result${data.results.length === 1 ? '' : 's'} shown, up to ${data.limit}, newest to oldest by record date. These are source excerpts, not an exhaustive review or an AI-generated answer.`);
+    message('search-message', `${data.results.length} result${data.results.length === 1 ? '' : 's'} shown, up to ${data.limit}, ${order === 'newest' ? 'newest to oldest by record date' : 'most relevant first'}. These are source excerpts, not an exhaustive review or an AI-generated answer.`);
   } catch (error) { message('search-message', error.message, true); }
-  finally { $('search-button').disabled = false; }
+  finally { $('search-button').disabled = false; searchOrder.select.disabled = false; }
 });
 for (const button of document.querySelectorAll('[data-view]')) button.addEventListener('click', () => { void loadView(button.dataset.view); });
 $('sign-out').addEventListener('click', () => { void signOut(); });
