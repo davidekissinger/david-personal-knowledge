@@ -10,7 +10,9 @@ export default async (request: Request) => {
       const body = await readJson(request);
       if (body.action === 'search') {
         const params = searchInput(body);
-        const results = await client.call('/rest/v1/rpc/search_passages_recent', { method: 'POST', body: JSON.stringify(params) });
+        if (body.order !== undefined && !['newest', 'relevance'].includes(body.order as string)) throw new AppError(400, 'Choose newest or relevance ordering.');
+        const rpc = body.order === 'relevance' ? 'search_passages' : 'search_passages_recent';
+        const results = await client.call(`/rest/v1/rpc/${rpc}`, { method: 'POST', body: JSON.stringify(params) });
         return json({ mode: 'evidence-only', results, limit: 20, generatedAnswer: null });
       }
       if (body.action === 'passage') {
@@ -24,7 +26,7 @@ export default async (request: Request) => {
     const action = new URL(request.url).searchParams.get('action') ?? 'summary';
     if (action === 'summary') return json(await client.call('/rest/v1/rpc/knowledge_summary', { method: 'POST', body: '{}' }));
     if (action === 'sources') return json({ rows: await client.call('/rest/v1/sources?select=id,source_type,source_name,sync_status,last_synced_at,created_at&order=created_at.desc&limit=100'), limit: 100 });
-    if (action === 'decisions') return json({ rows: await client.call('/rest/v1/decisions?select=id,statement,status,effective_at,supporting_passage_id,supersedes_id,rationale,created_at&order=created_at.desc&limit=100'), limit: 100 });
+    if (action === 'decisions') return json({ rows: await client.call('/rest/v1/decisions?select=id,statement,status,effective_at,supporting_passage_id,supersedes_id,rationale,created_at&order=effective_at.desc.nullslast,created_at.desc&limit=100'), limit: 100 });
     throw new AppError(400, 'Unsupported read action.');
   } catch (error) {
     // Do not log tokens, queries, excerpts, passwords, or raw upstream errors.
