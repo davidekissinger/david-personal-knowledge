@@ -10,6 +10,10 @@ let expiryTimer = null;
 let lastActivity = Date.now();
 let loginAttempt = 0;
 let unlockOnReturn = false;
+let recordsLoaded = false;
+let recordsAttempt = 0;
+let searchAttempt = 0;
+let evidenceAttempt = 0;
 
 function message(id, text = '', error = false) { $(id).textContent = text; $(id).classList.toggle('error', error); }
 function element(tag, text, className) { const node = document.createElement(tag); if (text !== undefined) node.textContent = String(text); if (className) node.className = className; return node; }
@@ -18,11 +22,17 @@ function empty(id, text) { $(id).replaceChildren(element('p', text, 'empty')); }
 function resetWorkspace() {
   loginAttempt++; passkeys.cancel(); message('passkey-setup-message');
   generation++; session = null; clearTimeout(expiryTimer); answers.reset(); capture.reset();
+  recordsAttempt++; recordsLoaded = false;
+  searchAttempt++; evidenceAttempt++;
   $('workspace').hidden = true; $('login-view').hidden = false; $('password').value = '';
-  for (const id of ['search-results', 'source-list', 'decision-list', 'evidence-content', 'account-email', 'evidence-locator']) $(id).replaceChildren();
+  for (const id of ['search-results', 'record-list', 'source-list', 'decision-list', 'evidence-content', 'account-email', 'evidence-locator']) $(id).replaceChildren();
   for (const id of ['source-count', 'record-count', 'passage-count', 'decision-count']) $(id).textContent = '—';
-  for (const id of ['workspace-message', 'search-message', 'evidence-message']) message(id);
+  for (const id of ['workspace-message', 'search-message', 'record-browse-message', 'evidence-message']) message(id);
   $('question').value = ''; $('include-history').checked = false;
+  $('record-browse').hidden = false; $('show-recent').hidden = true;
+  $('refresh-records').disabled = false; $('search-button').disabled = false; searchOrder.select.disabled = false;
+  $('my-settings').open = false; $('passkey-setup').open = false;
+  $('search-options').open = false;
   if ($('evidence-dialog').open) $('evidence-dialog').close();
   $('evidence-details').open = false; $('evidence-details').hidden = true;
 }
@@ -55,23 +65,63 @@ async function api(action, payload) {
 }
 async function showEvidence(id) {
   const currentGeneration = generation;
+  const attempt = ++evidenceAttempt;
+  const isCurrent = () => generation === currentGeneration && attempt === evidenceAttempt && $('evidence-dialog').open;
   $('evidence-content').replaceChildren(); $('evidence-locator').textContent = '';
   $('evidence-details').open = false; $('evidence-details').hidden = true;
   message('evidence-message', 'Loading source passage…'); $('evidence-dialog').showModal();
   try {
     const { passage } = await api('passage', { id });
-    if (generation !== currentGeneration) return;
+    if (!isCurrent()) return;
     $('evidence-locator').textContent = passage.citation_locator || `Passage ${passage.ordinal + 1}`;
     $('evidence-details').hidden = false;
     $('evidence-content').textContent = passage.content;
     message('evidence-message');
-  } catch (error) { if (generation === currentGeneration) message('evidence-message', error.message, true); }
+  } catch (error) { if (isCurrent()) message('evidence-message', error.message, true); }
 }
 function evidenceButton(id) { const b = element('button', 'Read source passage', 'secondary'); b.type = 'button'; b.addEventListener('click', () => showEvidence(id)); return b; }
 function sourceLink(value) {
   try { const url = new URL(value); if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password) return null;
     const link = element('a', 'Open original source'); link.href = url.href; link.target = '_blank'; link.rel = 'noopener noreferrer'; return link;
   } catch { return null; }
+}
+async function loadRecords() {
+  const attempt = ++recordsAttempt;
+  const currentGeneration = generation;
+  $('refresh-records').disabled = true;
+  message('record-browse-message', 'Loading your saved records…');
+  const isCurrent = () => attempt === recordsAttempt && currentGeneration === generation && session;
+  try {
+    const { rows } = await api('records');
+    if (!isCurrent()) return;
+    $('record-list').replaceChildren();
+    for (const row of rows) {
+      const { card, body } = resultRow(row.title, row.occurred_at);
+      body.append(element('span', row.record_status, 'status-tag'),
+        element('p', `${row.source_name || 'Source not recorded'} · ${row.author_name || 'Author not recorded'} · ${date(row.occurred_at)}`, 'meta'));
+      if (row.passage_id) {
+        const read = evidenceButton(row.passage_id);
+        read.textContent = 'Read first source passage';
+        body.append(read);
+      } else body.append(element('p', 'No source passage is available for this record.', 'meta'));
+      if (row.title?.trim().length >= 2) {
+        const search = element('button', 'Search this title', 'secondary'); search.type = 'button';
+        search.addEventListener('click', () => {
+          $('question').value = row.title.slice(0, 500); $('search-form').requestSubmit();
+        });
+        body.append(search);
+      }
+      $('record-list').append(card);
+    }
+    if (!rows.length) empty('record-list', 'Your record has no saved entries to show yet. Choose Add to myPKR to prepare your first request.');
+    recordsLoaded = true;
+    message('record-browse-message');
+  } catch (error) {
+    if (isCurrent()) {
+      message('record-browse-message', `${error.message} Use Refresh to try again.`, true);
+      if (!recordsLoaded) empty('record-list', 'Your records could not be loaded. Search is still available.');
+    }
+  } finally { if (attempt === recordsAttempt) $('refresh-records').disabled = false; }
 }
 function renderSearch(rows) {
   $('search-results').replaceChildren();
@@ -139,7 +189,8 @@ async function loadView(name) {
   for (const view of ['ask', 'answer', 'capture', 'sources', 'decisions']) $(`view-${view}`).hidden = view !== name;
   message('workspace-message');
   if (name === 'answer') return answers.open();
-  if (name === 'ask' || name === 'capture') return;
+  if (name === 'ask') { if (!recordsLoaded && !$('record-browse').hidden) await loadRecords(); return; }
+  if (name === 'capture') return;
   const container = name === 'sources' ? 'source-list' : 'decision-list';
   empty(container, 'Loading your record…');
   try {
@@ -185,8 +236,9 @@ async function acceptSession(data) {
     for (const [id, field] of [['source-count', 'sources'], ['record-count', 'records'], ['passage-count', 'passages'], ['decision-count', 'decisions']]) $(id).textContent = Number(summary[field]).toLocaleString();
     $('login-view').hidden = true; $('workspace').hidden = false;
     await loadView('ask');
-    empty('search-results', summary.passages ? 'What would you like to find in your record? Try a name, memory, or phrase.' : 'Your record has no searchable passages yet. Choose Add to myPKR to prepare your first request for ChatGPT.');
-    message('login-message'); $('question').focus();
+    if (generation !== acceptedGeneration || !session) throw new Error('Session changed. Please sign in again.');
+    if (document.hidden) throw new Error('Return to myPKR and unlock again.');
+    message('login-message'); $('workspace-title').focus({ preventScroll: true });
   } catch (error) {
     if (generation === acceptedGeneration && session) await signOut(error.message || 'Sign-in could not be completed. Please try again.');
     throw error;
@@ -197,7 +249,7 @@ const passkeys = createPasskeys({ window, document, acceptSession, getSession: (
   ceremony: async (...args) => { const { passkeyCeremony } = await import('./auth-sdk.js'); return passkeyCeremony(...args); },
 });
 const searchOrder = orderControl('search-order');
-$('search-form').append(searchOrder.container);
+$('search-order-slot').append(searchOrder.container);
 searchOrder.select.addEventListener('change', () => { if ($('question').value.trim().length >= 2) $('search-form').requestSubmit(); });
 $('login-form').addEventListener('submit', async event => {
   event.preventDefault(); if (!configuration) return;
@@ -220,20 +272,40 @@ $('login-form').addEventListener('submit', async event => {
 });
 $('search-form').addEventListener('submit', async event => {
   event.preventDefault(); if ($('search-button').disabled) return;
+  const attempt = ++searchAttempt;
+  const currentGeneration = generation;
+  const isCurrent = () => attempt === searchAttempt && currentGeneration === generation && session;
   const order = searchOrder.select.value;
   $('search-button').disabled = true; searchOrder.select.disabled = true; message('search-message', 'Searching your saved records…');
+  $('record-browse').hidden = true; $('show-recent').hidden = false;
   $('search-results').replaceChildren();
   try {
     const data = await api('search', { query: $('question').value.trim(), includeHistory: $('include-history').checked, order });
+    if (!isCurrent()) return;
     const counts = renderSearch(data.results);
     message('search-message', `${counts.records} record${counts.records === 1 ? '' : 's'} · ${counts.passages} matching passage${counts.passages === 1 ? '' : 's'}, ${order === 'newest' ? 'newest to oldest by record date' : 'most relevant first'}. Search returns up to ${data.limit} matching passages, grouped by record.`);
-  } catch (error) { message('search-message', error.message, true); }
-  finally { $('search-button').disabled = false; searchOrder.select.disabled = false; }
+  } catch (error) { if (isCurrent()) message('search-message', error.message, true); }
+  finally { if (isCurrent()) { $('search-button').disabled = false; searchOrder.select.disabled = false; } }
 });
 for (const button of document.querySelectorAll('[data-view]')) button.addEventListener('click', () => { void loadView(button.dataset.view); });
 for (const button of document.querySelectorAll('[data-open-view]')) button.addEventListener('click', () => { void loadView(button.dataset.openView); $('pkr-title').focus(); });
+$('refresh-records').addEventListener('click', () => { void loadRecords(); });
+$('show-recent').addEventListener('click', () => {
+  searchAttempt++; $('search-button').disabled = false; searchOrder.select.disabled = false;
+  $('question').value = ''; $('search-results').replaceChildren(); message('search-message');
+  $('record-browse').hidden = false; $('show-recent').hidden = true;
+  if (!recordsLoaded) void loadRecords();
+});
+$('settings-open').addEventListener('click', () => {
+  $('my-settings').open = true;
+  $('my-settings').scrollIntoView({ block: 'start' });
+  $('my-settings').querySelector('summary').focus({ preventScroll: true });
+});
+$('pkr-paste').addEventListener('click', () => $('pkr-content').focus());
+$('pkr-link').addEventListener('click', () => $('pkr-source').focus());
 $('sign-out').addEventListener('click', () => { void signOut(); });
 $('close-evidence').addEventListener('click', () => $('evidence-dialog').close());
+$('evidence-dialog').addEventListener('close', () => { evidenceAttempt++; });
 for (const type of ['pointerdown', 'keydown']) document.addEventListener(type, () => { lastActivity = Date.now(); }, { passive: true });
 setInterval(() => { if (session && Date.now() - lastActivity > 15 * 60 * 1000) void signOut('Signed out after 15 minutes of inactivity.'); }, 30000);
 window.addEventListener('pagehide', resetWorkspace);

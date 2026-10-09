@@ -1,6 +1,6 @@
 import type { Config } from '@netlify/functions';
 import { AppError, json, readJson, searchInput, uuid } from '../../lib/http.mts';
-import { connect } from '../../lib/backend.mts';
+import { connect, recentRecords } from '../../lib/backend.mts';
 
 export default async (request: Request) => {
   if (!['GET', 'POST'].includes(request.method)) return json({ error: 'Method not allowed.' }, 405);
@@ -24,6 +24,7 @@ export default async (request: Request) => {
       throw new AppError(400, 'Unsupported read action. Use the myPKR skill to add records.');
     }
     const action = new URL(request.url).searchParams.get('action') ?? 'summary';
+    if (action === 'records') return json({ rows: await recentRecords(client.call), limit: 30 });
     if (action === 'summary') return json(await client.call('/rest/v1/rpc/knowledge_summary', { method: 'POST', body: '{}' }));
     if (action === 'sources') return json({ rows: await client.call('/rest/v1/sources?select=id,source_type,source_name,sync_status,last_synced_at,created_at&order=created_at.desc&limit=100'), limit: 100 });
     if (action === 'decisions') return json({ rows: await client.call('/rest/v1/decisions?select=id,statement,status,effective_at,supporting_passage_id,supersedes_id,rationale,created_at&order=effective_at.desc.nullslast,created_at.desc&limit=100'), limit: 100 });

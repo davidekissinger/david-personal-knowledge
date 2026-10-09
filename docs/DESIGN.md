@@ -53,7 +53,9 @@ and save status precise. Make errors recoverable with a useful next step.
 1. **Open my record.** Keep unlock prominent and compact. Avoid marketing panels
    that push sign-in below the fold. Fingerprint/passkey behavior must reflect
    actual device and service readiness; see `PASSKEYS.md`.
-2. **Find what matters.** Search saved material, then expand a dated record to
+2. **Find what matters.** Put search and a compact list of recent records first.
+   Show up to 30 current records, newest by recorded event date, with undated
+   entries last. Keep a way to return to browsing after a search. Expand a record to
    read the source. Explain that missing results do not establish that an event
    did not happen or that unimported files contain no relevant information.
 3. **Choose what to keep.** Capture the owner's account, supplied sources,
@@ -77,6 +79,15 @@ merely because the product emphasizes personal control.
   emphasis; keep the name contiguous and readable to assistive technology.
 - Preserve the existing app icon and installation identity. The wordmark is
   **myPKR**, while the small icon may retain readable **PKR** lettering.
+- Keep the unlock screen centered around the app icon and one biometric action,
+  with password fallback and accurate device guidance. Keep account setup and
+  counts in the collapsed **My settings and record overview** area below the
+  workspace, accessible from the header.
+- Make the capture prompt **What would you like to remember?** the first field.
+  Write/paste and source-link controls focus their fields. **Add a text file**
+  reads .txt/.md/.csv/.json locally into the draft, within 100 KB and the existing
+  character limits; preserve its exact text and filename provenance. It does not
+  upload a file or save a record. Show uncertainty fields through a disclosure.
 - Use one clear page heading, a short supporting sentence, and the primary
   action. Keep the positioning line brief; avoid large introductory panels.
 - Use the shared compact dated rows and expansion controls for records, sources,

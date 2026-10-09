@@ -19,40 +19,45 @@
   <p id="install-status" class="sr-only" role="status" aria-live="polite"></p>
   <main id="main">
     <section id="login-view" class="login-layout">
-      <div class="panel login-panel"><p class="eyebrow">My life. My words. My record.</p><h1>Unlock myPKR</h1>
-        <p class="muted">Use your fingerprint, face, or device PIN with a saved passkey.</p>
+      <div class="panel login-panel"><img class="unlock-mark" src="/pkr-icon-192.png" width="72" height="72" alt=""><p class="eyebrow">My life. My words. My record.</p><h1>Unlock my record</h1>
+        <p class="muted">Your record, ready when you are.</p>
         <button id="passkey-unlock" class="unlock-button" type="button" disabled>
           <svg viewBox="0 0 48 48" width="42" height="42" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M8 24a16 16 0 0 1 32 0M13 24a11 11 0 0 1 22 0c0 10-3 16-6 20M18 24a6 6 0 0 1 12 0c0 10-2 15-5 20M24 24c0 10-2 15-5 19M8 29c0 5-1 8-3 11M13 29c0 7-2 11-4 14M18 29c0 7-1 10-3 14M40 29c0 5-1 9-3 13M10 12a20 20 0 0 1 28 0"/></svg>
           Unlock with fingerprint
         </button>
         <p id="login-message" class="message" role="status" aria-live="polite">Checking sign-in options…</p>
-        <details id="password-fallback" class="password-fallback"><summary id="password-choice">Use password / first-time setup</summary>
+        <details id="password-fallback" class="password-fallback"><summary id="password-choice">Use password</summary>
           <p class="muted">Sign in once, then choose <strong>Set up fingerprint</strong> inside myPKR.</p>
           <form id="login-form"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="username" required maxlength="320"><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required maxlength="1024"><button id="login-button" type="submit" disabled>Sign in with password</button></form>
         </details>
-        <p class="fine">Your device controls verification. Your records stay locked until your account is approved.</p>
+        <p class="fine">Your device may offer a fingerprint, face, or PIN. Your records stay locked until your account is approved.</p>
       </div>
     </section>
     <section id="workspace" hidden>
-      <div class="workspace-top"><div><p class="eyebrow">My life. My words. My record.</p><h1>My record</h1><p class="record-intro">Memories, documents, and decisions that matter to you.</p></div><div class="account"><span id="account-email"></span><button class="secondary" id="sign-out">Sign out</button></div></div>
+      <div class="workspace-top"><div><p class="eyebrow">My life. My words. My record.</p><h1 id="workspace-title" tabindex="-1">My record</h1><p class="record-intro">Memories, documents, and decisions that matter to you.</p></div><div class="workspace-actions"><button type="button" data-open-view="capture">+ Add to myPKR</button><button type="button" class="secondary" id="settings-open" aria-controls="my-settings">My settings</button></div></div>
       <p id="workspace-message" class="message" role="status" aria-live="polite"></p>
-      <details id="passkey-setup" class="passkey-setup" hidden><summary>Fingerprint sign-in</summary><p class="muted">Create a passkey on this device to unlock myPKR when you open it.</p><button id="passkey-register" class="secondary" type="button" disabled>Set up fingerprint</button><p id="passkey-setup-message" class="message" role="status" aria-live="polite"></p></details>
-      <div class="stats"><div><span id="source-count">—</span><small>My sources</small></div><div><span id="record-count">—</span><small>Saved records</small></div><div><span id="passage-count">—</span><small>Source passages</small></div><div><span id="decision-count">—</span><small>My decisions</small></div></div>
       <nav class="tabs" aria-label="My record views"><button data-view="ask" aria-current="page">My record</button><button data-view="capture">Add to myPKR</button><button data-view="sources">My sources</button><button data-view="decisions">My decisions</button></nav>
-      <section id="view-ask" class="panel"><div class="section-heading"><div><p class="eyebrow">Find what matters to you</p><h2>Search my record</h2></div><span class="badge subtle">Source passages</span></div><p class="muted">Find a memory, document, or decision and read where it came from. Search covers information already added to your record and available to your account. For help exploring a question, choose Ask AI and review the sources first.</p>
-        <form id="search-form"><label for="question">What would you like to find?</label><div class="search-row"><input id="question" minlength="2" maxlength="500" placeholder="A person, memory, milestone, or exact phrase" required><button type="submit" id="search-button">Search my record</button></div><label class="check"><input id="include-history" type="checkbox"> Include earlier versions of my records</label></form><p id="search-message" class="message" role="status" aria-live="polite"></p><div id="search-results"></div>
+      <section id="view-ask" class="panel record-panel" aria-labelledby="search-title">
+        <h2 id="search-title" class="sr-only">Search my record</h2>
+        <form id="search-form"><label for="question">Find something in my record…</label><div class="search-row"><input id="question" type="search" minlength="2" maxlength="500" placeholder="A person, memory, milestone, or phrase" required><button type="submit" id="search-button">Search my record</button></div><details id="search-options" class="search-options"><summary>Search options</summary><label class="check"><input id="include-history" type="checkbox"> Include earlier versions of my records</label><div id="search-order-slot"></div></details></form>
+        <p class="field-hint">Search covers information already saved to your record.</p>
+        <p id="search-message" class="message" role="status" aria-live="polite"></p><button id="show-recent" type="button" class="secondary" hidden>Back to recent records</button><div id="search-results"></div>
+        <section id="record-browse" aria-labelledby="record-browse-title"><div class="section-heading record-list-heading"><div><h2 id="record-browse-title">Recent records</h2><p class="field-hint">Newest first by record date. Undated entries appear last. Up to 30 records.</p></div><button id="refresh-records" type="button" class="secondary">Refresh</button></div><p id="record-browse-message" class="message" role="status" aria-live="polite"></p><div id="record-list"></div></section>
       </section>
       <section id="view-capture" class="panel" hidden aria-labelledby="capture-title">
         <div class="section-heading"><div><p class="eyebrow">My story, with its sources</p><h2 id="capture-title">Add to myPKR</h2></div><span class="badge subtle">Save through ChatGPT</span></div>
-        <p class="muted capture-intro">Choose what you want to keep in your record. Prepare a request here, then paste it into ChatGPT. The myPKR skill checks sources and existing records before saving, and confirms the result.</p>
+        <p class="muted capture-intro">Keep a memory, a document, or something you want to return to. Prepare your request, then use ChatGPT to check and save it.</p>
         <div class="capture-layout">
           <div>
             <form id="pkr-form">
-              <label for="pkr-title">Record title</label><input id="pkr-title" required maxlength="200" placeholder="A memory, milestone, document, or decision">
-              <label for="pkr-content">What would you like to preserve?</label><textarea id="pkr-content" required maxlength="20000" rows="7" placeholder="Write or paste the information in your own words. Include the details that matter." aria-describedby="pkr-content-note"></textarea><p id="pkr-content-note" class="field-hint">Your draft stays in this tab. Copy or download it before switching away, leaving, or signing out.</p>
+              <label for="pkr-content" class="capture-prompt">What would you like to remember?</label><textarea id="pkr-content" required maxlength="20000" rows="7" placeholder="Write or paste the information you want to keep. Preserve quotations in their original words." aria-describedby="pkr-content-note"></textarea>
+              <div class="capture-input-actions"><button id="pkr-paste" type="button" class="secondary">Write or paste text</button><button id="pkr-link" type="button" class="secondary">Add a source link</button><button id="pkr-file-open" type="button" class="secondary">Add a text file</button><input id="pkr-file" type="file" accept=".txt,.md,.csv,.json" hidden aria-label="Choose a text file"></div>
+              <p id="pkr-file-message" class="message" role="status" aria-live="polite"></p>
+              <p id="pkr-content-note" class="field-hint">Text files are read into this draft only (.txt, .md, .csv, .json; up to 100 KB and 20,000 characters). Nothing is uploaded. Copy or download your draft before leaving or switching away.</p>
+              <label for="pkr-title">Record title</label><input id="pkr-title" required maxlength="200" placeholder="Give this record a title">
               <div class="capture-fields"><div><label for="pkr-source">Source <span class="optional">(optional)</span></label><input id="pkr-source" maxlength="1000" placeholder="A link, document name, or recollection"></div><div><label for="pkr-timeframe">Date or timeframe <span class="optional">(optional)</span></label><input id="pkr-timeframe" maxlength="300" placeholder="Exact date, approximate year, or unknown"></div></div>
               <label for="pkr-evidence">How do you know this?</label><select id="pkr-evidence"><option value="recollection">My recollection</option><option value="source">A document or published source</option><option value="mixed">A mix of recollection and sources</option></select>
-              <label for="pkr-uncertainty">Uncertainty or corrections <span class="optional">(optional)</span></label><textarea id="pkr-uncertainty" maxlength="1500" rows="2" placeholder="What is approximate, disputed, or still needs verification?"></textarea>
+              <details class="capture-more"><summary>Uncertainty or corrections</summary><label for="pkr-uncertainty">What needs context? <span class="optional">(optional)</span></label><textarea id="pkr-uncertainty" maxlength="1500" rows="2" placeholder="What is approximate, disputed, or still needs verification?"></textarea></details>
               <div class="capture-actions"><button type="submit">Prepare my request</button><button type="button" class="secondary" id="pkr-clear">Clear draft</button></div>
             </form>
             <p id="pkr-message" class="message" role="status" aria-live="polite"></p>
@@ -73,6 +78,7 @@
       </section>
       <section id="view-sources" class="panel" hidden><div class="section-heading"><div><p class="eyebrow">Where my information comes from</p><h2>My sources</h2></div><button type="button" data-open-view="capture">Add to myPKR</button></div><p class="muted">See where your saved information comes from and which sources have been processed. Connecting an account does not add everything in it to your record. Up to 100 sources are shown.</p><div id="source-list"></div></section>
       <section id="view-decisions" class="panel" hidden><div class="section-heading"><div><p class="eyebrow">How my record evolves</p><h2>My decisions and corrections</h2></div><span class="badge subtle">Read only</span></div><p class="muted">Revisit the decisions and corrections kept in your record. Proposed, confirmed, superseded, and disputed statements keep their labels and history. A status label does not independently verify a statement. Up to 100 entries are shown.</p><div id="decision-list"></div></section>
+      <details id="my-settings" class="record-settings"><summary>My settings and record overview</summary><div class="account"><span id="account-email"></span><button class="secondary" id="sign-out">Sign out</button></div><details id="passkey-setup" class="passkey-setup" hidden><summary>Fingerprint sign-in</summary><p class="muted">Create a passkey on this device to unlock myPKR when you open it.</p><button id="passkey-register" class="secondary" type="button" disabled>Set up fingerprint</button><p id="passkey-setup-message" class="message" role="status" aria-live="polite"></p></details><div class="stats"><div><span id="source-count">—</span><small>My sources</small></div><div><span id="record-count">—</span><small>Saved records</small></div><div><span id="passage-count">—</span><small>Source passages</small></div><div><span id="decision-count">—</span><small>My decisions</small></div></div></details>
       <p class="fine workspace-note">Your record keeps original sources and earlier versions in context. Add to myPKR prepares your request for ChatGPT; it does not save it here. Ask AI sends your question and selected evidence to OpenAI only after you approve.</p>
     </section>
   </main>
@@ -85,5 +91,5 @@
     <div class="install-guide"><h3>Android · Chrome</h3><p>Open the browser menu <strong>⋮</strong>, choose <strong>Install and create shortcut</strong> or <strong>Add to Home screen</strong>, then follow the prompts.</p><h3>iPhone or iPad · Safari</h3><p>Tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>. Keep the name <strong><span class="brand-my">my</span>PKR</strong>, enable <strong>Open as Web App</strong> if offered, and tap <strong>Add</strong>.</p><h3>Computer · Chrome or Edge</h3><p>Look for an install icon in the address bar or an install option in the browser menu.</p></div>
     <p class="fine">Open this page in your device’s browser if you are viewing it inside another app. myPKR needs an internet connection and your usual sign-in.</p>
   </dialog>
-  <footer>myPKR · My life. My words. My record. <span>CareNova · v0.4.5</span></footer>
+  <footer>myPKR · My life. My words. My record. <span>CareNova · v0.4.6</span></footer>
 </body></html>

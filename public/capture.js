@@ -37,7 +37,11 @@ export function createCapture({ findRecord }) {
   const preview = $('pkr-preview');
   const request = $('pkr-request');
   const copy = $('pkr-copy');
+  const fileInput = $('pkr-file');
+  const fileOpen = $('pkr-file-open');
+  const fileMessage = $('pkr-file-message');
   let revision = 0;
+  let fileRevision = 0;
   let preparedTitle = '';
   function say(text = '', error = false) {
     $('pkr-message').textContent = text;
@@ -45,6 +49,8 @@ export function createCapture({ findRecord }) {
   }
   function invalidate() {
     revision++;
+    fileRevision++;
+    if (fileMessage) { fileMessage.textContent = ''; fileMessage.classList.toggle('error', false); }
     const hadPreview = !preview.hidden;
     preview.hidden = true;
     request.value = '';
@@ -52,8 +58,61 @@ export function createCapture({ findRecord }) {
     copy.disabled = false;
     say(hadPreview ? 'Details changed. Prepare an updated request when you are ready.' : '');
   }
-  function reset() { invalidate(); form.reset(); say(); }
-  for (const type of ['input', 'change']) form.addEventListener(type, invalidate);
+  function reset() { invalidate(); form.reset(); if (fileInput) fileInput.value = ''; say(); }
+  for (const type of ['input', 'change']) form.addEventListener(type, event => {
+    // A file selection invalidates its own draft before the asynchronous read.
+    if (event.target !== fileInput) invalidate();
+  });
+  if (fileInput && fileOpen && fileMessage) {
+    const fileSay = (text, error = false) => {
+      fileMessage.textContent = text;
+      fileMessage.classList.toggle('error', error);
+    };
+    fileOpen.addEventListener('click', () => {
+      // Opening another picker also cancels the result of an earlier read.
+      fileRevision++;
+      fileSay('');
+      fileInput.click();
+    });
+    fileInput.addEventListener('cancel', () => { fileRevision++; fileSay(''); });
+    fileInput.addEventListener('change', async () => {
+      const file = fileInput.files?.[0];
+      fileInput.value = '';
+      if (!file) { fileRevision++; fileSay(''); return; }
+      invalidate();
+      const ticket = fileRevision;
+      if (!/\.(txt|md|csv|json)$/i.test(file.name)) {
+        fileSay('Choose a .txt, .md, .csv, or .json text file.', true); return;
+      }
+      if (file.size > 100 * 1024) {
+        fileSay('Choose a text file of 100 KB or less.', true); return;
+      }
+      fileSay('Reading your text file on this device…');
+      let text;
+      try { text = await file.text(); }
+      catch {
+        if (ticket === fileRevision) fileSay('This file could not be read. Try copying its text into the form.', true);
+        return;
+      }
+      if (ticket !== fileRevision) return;
+      if (!text.trim()) { fileSay('This file has no text to add.', true); return; }
+      const currentContent = $('pkr-content').value;
+      const content = currentContent ? currentContent + '\n\n' + text : text;
+      if (content.length > 20000) {
+        fileSay('Your draft and file must fit within 20,000 characters. Copy a shorter excerpt into the form.', true); return;
+      }
+      const currentSource = $('pkr-source').value;
+      const label = 'Local text file: ' + file.name;
+      const source = currentSource ? currentSource + '\n' + label : label;
+      if (source.length > 1000) {
+        fileSay('The source field is too long. Shorten it or the file name before adding the file.', true); return;
+      }
+      $('pkr-content').value = content;
+      $('pkr-source').value = source;
+      fileSay('Text added to your draft. Review its source and how you know this information, then prepare your request. Nothing has been uploaded or saved.');
+      $('pkr-content').focus();
+    });
+  }
   form.addEventListener('submit', event => {
     event.preventDefault();
     invalidate();

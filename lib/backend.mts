@@ -28,3 +28,29 @@ export async function connect(request: Request, read: (name: string) => string |
   return { call, user };
 }
 
+type RecordListRow = {
+  id: string; title: string | null; occurred_at: string | null;
+  record_status: 'active' | 'closed'; author_name: string | null;
+  source: { source_name: string }; passages: { id: string }[];
+};
+
+export async function recentRecords(call: (path: string) => Promise<unknown>) {
+  // The named composite relationships preserve the record/source owner match.
+  // RLS still governs every row, including source revocation and passage access.
+  const query = new URLSearchParams({
+    select: 'id,title,occurred_at,record_status,author_name,source:sources!records_source_owner_fk!inner(source_name),passages:passages!passages_record_owner_fk(id)',
+    record_status: 'in.(active,closed)',
+    'source.sync_status': 'neq.revoked',
+    order: 'occurred_at.desc.nullslast,id.asc',
+    'passages.order': 'ordinal.asc,id.asc',
+    'passages.limit': '1',
+    limit: '30',
+  });
+  const rows = await call(`/rest/v1/records?${query}`) as RecordListRow[];
+  return rows.map(row => ({
+    id: row.id, title: row.title, occurred_at: row.occurred_at,
+    record_status: row.record_status, source_name: row.source.source_name,
+    author_name: row.author_name, passage_id: row.passages[0]?.id ?? null,
+  }));
+}
+

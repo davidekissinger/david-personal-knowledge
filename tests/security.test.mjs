@@ -24,6 +24,56 @@ test('anonymous knowledge endpoint stops before calling a remote service', async
   const response = await knowledge(new Request('https://app.example/api/knowledge'));
   assert.equal(response.status, 401); assert.equal(response.headers.get('cache-control'), 'no-store');
 });
+test('recent record list requires confirmed owner approval before reading rows', async () => {
+  const originalFetch = globalThis.fetch; const originalNetlify = globalThis.Netlify;
+  const calls = [];
+  globalThis.Netlify = { env: { get: env } };
+  globalThis.fetch = async url => {
+    calls.push(url);
+    return Response.json(url.endsWith('/user') ? { id: 'synthetic-user', email_confirmed_at: '2026-01-01' } : { approved: false });
+  };
+  try {
+    const anonymous = await knowledge(new Request('https://app.example/api/knowledge?action=records'));
+    assert.equal(anonymous.status, 401); assert.equal(calls.length, 0);
+    const unapproved = await knowledge(new Request('https://app.example/api/knowledge?action=records', { headers: { authorization: 'Bearer synthetic.token.signature' } }));
+    assert.equal(unapproved.status, 403); assert.equal(calls.length, 2);
+    assert.equal(calls.some(url => url.includes('/rest/v1/records?')), false);
+  } finally { globalThis.fetch = originalFetch; globalThis.Netlify = originalNetlify; }
+});
+test('recent record list is bounded to current records and first passage identifiers', async () => {
+  const originalFetch = globalThis.fetch; const originalNetlify = globalThis.Netlify;
+  const calls = [];
+  const records = [
+    { id: 'record-1', title: 'A saved memory', occurred_at: '2026-01-01T00:00:00Z', record_status: 'active', author_name: 'Source author', source: { source_name: 'Source name' }, passages: [{ id: 'passage-1' }] },
+    { id: 'record-2', title: null, occurred_at: null, record_status: 'closed', author_name: null, source: { source_name: 'Another source' }, passages: [] },
+  ];
+  globalThis.Netlify = { env: { get: env } };
+  globalThis.fetch = async (url, options) => {
+    calls.push({ url, options });
+    if (url.endsWith('/user')) return Response.json({ id: 'synthetic-user', email_confirmed_at: '2026-01-01' });
+    if (url.endsWith('/app_access')) return Response.json({ approved: true });
+    return Response.json(records);
+  };
+  try {
+    const response = await knowledge(new Request('https://app.example/api/knowledge?action=records&limit=999&includeHistory=true&order=anything', { headers: { authorization: 'Bearer synthetic.token.signature' } }));
+    assert.equal(response.status, 200); assert.equal(response.headers.get('cache-control'), 'no-store');
+    assert.deepEqual(await response.json(), { rows: [
+      { id: 'record-1', title: 'A saved memory', occurred_at: '2026-01-01T00:00:00Z', record_status: 'active', source_name: 'Source name', author_name: 'Source author', passage_id: 'passage-1' },
+      { id: 'record-2', title: null, occurred_at: null, record_status: 'closed', source_name: 'Another source', author_name: null, passage_id: null },
+    ], limit: 30 });
+    const { searchParams } = new URL(calls.at(-1).url);
+    assert.equal(searchParams.get('limit'), '30');
+    assert.equal(searchParams.get('record_status'), 'in.(active,closed)');
+    assert.equal(searchParams.get('source.sync_status'), 'neq.revoked');
+    assert.equal(searchParams.get('order'), 'occurred_at.desc.nullslast,id.asc');
+    assert.equal(searchParams.get('passages.order'), 'ordinal.asc,id.asc');
+    assert.equal(searchParams.get('passages.limit'), '1');
+    assert.match(searchParams.get('select'), /sources!records_source_owner_fk!inner\(source_name\)/);
+    assert.match(searchParams.get('select'), /passages!passages_record_owner_fk\(id\)/);
+    assert.doesNotMatch(searchParams.get('select'), /content|metadata|citation_locator|source_uri/);
+    for (const call of calls) { assert.equal(call.options.headers.Authorization, 'Bearer synthetic.token.signature'); assert.equal(call.options.headers.apikey, 'sb_publishable_synthetic_test'); }
+  } finally { globalThis.fetch = originalFetch; globalThis.Netlify = originalNetlify; }
+});
 test('unsupported write methods have no route', async () => {
   for (const method of ['PUT', 'PATCH', 'DELETE']) assert.equal((await knowledge(new Request('https://app.example/api/knowledge', { method }))).status, 405);
 });
