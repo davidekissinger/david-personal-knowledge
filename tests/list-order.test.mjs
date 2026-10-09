@@ -1,7 +1,43 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { newestFirst } from '../public/list-ui.js';
+import { newestFirst, groupSearchResults } from '../public/list-ui.js';
 import knowledge from '../netlify/functions/knowledge.mts';
+
+test('multiple matching passages appear under one record without losing their identities', () => {
+  const rows = Object.freeze([
+    Object.freeze({ record_id: 'record-a', passage_id: 'summary', title: 'A life event', excerpt: 'Summary' }),
+    Object.freeze({ record_id: 'record-a', passage_id: 'original', title: 'A life event', excerpt: 'Original text' }),
+  ]);
+  const groups = groupSearchResults(rows);
+  assert.equal(groups.length, 1);
+  assert.equal(groups[0].record, rows[0]);
+  assert.deepEqual(groups[0].matches, [...rows]);
+  assert.equal(groups[0].matches[1], rows[1]);
+});
+
+test('grouping preserves server ranking and keeps separate records and historical versions distinct', () => {
+  const rows = [
+    { record_id: 'recent', passage_id: 'a', title: 'Same title', record_status: 'active' },
+    { record_id: 'other', passage_id: 'b', title: 'Same title', record_status: 'active' },
+    { record_id: 'recent', passage_id: 'c', title: 'Same title', record_status: 'active' },
+    { record_id: 'history', passage_id: 'd', title: 'Same title', record_status: 'superseded' },
+  ];
+  const groups = groupSearchResults(rows);
+  assert.deepEqual(groups.map(group => group.record.record_id), ['recent', 'other', 'history']);
+  assert.deepEqual(groups[0].matches.map(row => row.passage_id), ['a', 'c']);
+  assert.equal(groups[2].record.record_status, 'superseded');
+  assert.deepEqual(groupSearchResults([...rows].reverse()).map(group => group.record.record_id), ['history', 'recent', 'other']);
+});
+
+test('only repeated passage IDs within one record are deduplicated, never matching text or titles', () => {
+  const row = { record_id: 'a', passage_id: 'one', title: 'Shared title', excerpt: 'Identical text' };
+  const groups = groupSearchResults([row, { ...row }, { ...row, passage_id: 'two' }, { ...row, record_id: 'b', passage_id: 'three' }]);
+  assert.equal(groups.length, 2);
+  assert.equal(groups.reduce((count, group) => count + group.matches.length, 0), 3);
+  assert.equal(groups[0].matches.length, 2);
+  assert.deepEqual(groupSearchResults([]), []);
+  assert.equal(groupSearchResults([{ title: 'Missing identity' }, { title: 'Missing identity' }]).length, 2);
+});
 
 test('display sorting preserves evidence identities, original relevance order, and undated entries', () => {
   const evidence = Object.freeze([

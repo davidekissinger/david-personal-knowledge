@@ -11,6 +11,19 @@ export function newestFirst(rows, getDate) {
   return [...rows].sort((a, b) => { const x = stamp(a), y = stamp(b); return x === y ? 0 : x > y ? -1 : 1; });
 }
 
+// Keep the server's date/relevance ordering and group only by record identity.
+// Different records (including historical versions) may share a title and date.
+export function groupSearchResults(rows) {
+  const groups = new Map();
+  for (const row of rows) {
+    const key = row.record_id || Symbol('unidentified record');
+    if (!groups.has(key)) groups.set(key, { record: row, matches: [] });
+    const group = groups.get(key);
+    if (!row.passage_id || !group.matches.some(match => match.passage_id === row.passage_id)) group.matches.push(row);
+  }
+  return [...groups.values()];
+}
+
 let sequence = 0;
 export function resultRow(title, value, dateLabel = 'Record date') {
   const card = make('article', undefined, 'evidence-card search-result');

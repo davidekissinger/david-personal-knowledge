@@ -94,5 +94,12 @@ textarea:focus-visible,select:focus-visible{outline:3px solid #2b898d;outline-of
 .install-guide h3{font-size:14px;margin:22px 0 6px}
 .install-guide p{color:var(--muted);margin-bottom:0}
 #install-message:empty{display:none}
+.passage-section{border-top:1px solid var(--line);padding:8px 0;font-size:13px}
+.passage-section>summary{cursor:pointer;overflow-wrap:anywhere}
+.passage-section>summary:focus-visible{outline:3px solid #2b898d;outline-offset:3px}
+.passage-label{font-weight:650;color:var(--navy)}
+.passage-preview{display:block;margin:2px 0 0 15px;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.passage-section>.excerpt{margin:10px 0}
+.passage-section>.excerpt:empty{display:none}
 @media(max-width:850px){.topbar-actions .badge{display:none}}
 @media(max-width:650px){.topbar{flex-wrap:wrap;gap:12px}.topbar-actions{margin-left:59px}#install-open{padding:8px 12px}.install-preview{gap:14px}.install-preview strong{font-size:15px}}

@@ -1,6 +1,6 @@
 import { createAnswers } from './answers.js';
 import { createCapture } from './capture.js';
-import { resultRow, newestFirst, orderControl } from './list-ui.js';
+import { resultRow, newestFirst, orderControl, groupSearchResults } from './list-ui.js';
 const $ = id => document.getElementById(id);
 let configuration = null;
 let session = null;
@@ -71,44 +71,64 @@ function sourceLink(value) {
 }
 function renderSearch(rows) {
   $('search-results').replaceChildren();
-  if (!rows.length) { empty('search-results', 'No matching passages were found in the accessible indexed records. This does not establish what is in files that have not been imported.'); return; }
-  for (const row of rows) {
+  const groups = groupSearchResults(rows);
+  const counts = { records: groups.length, passages: groups.reduce((total, group) => total + group.matches.length, 0) };
+  if (!groups.length) { empty('search-results', 'No matching passages were found in the accessible indexed records. This does not establish what is in files that have not been imported.'); return counts; }
+  for (const { record: row, matches } of groups) {
     const { card, body, toggle } = resultRow(row.title, row.occurred_at);
-    const content = element('p', '', 'excerpt');
-    const locator = element('p', '', 'meta');
-    const sourceDetails = element('details', undefined, 'source-details');
-    sourceDetails.hidden = true;
-    sourceDetails.append(element('summary', 'Source details'), locator);
-    const status = element('p', '', 'message'); status.setAttribute('role', 'status');
     body.append(element('span', row.record_status, 'status-tag'),
-      element('p', `${row.source_name} · ${row.author_name || 'Author not recorded'} · ${date(row.occurred_at)}`, 'meta'),
-      status, content, sourceDetails);
-    const link = sourceLink(row.source_uri); if (link) { const p = element('p'); p.append(link); body.append(p); }
-    let requestVersion = 0;
-    toggle.addEventListener('click', async () => {
-      const version = ++requestVersion;
-      const currentGeneration = generation;
-      const expanded = toggle.getAttribute('aria-expanded') === 'true';
-      content.textContent = ''; locator.textContent = ''; status.textContent = '';
-      sourceDetails.open = false; sourceDetails.hidden = true;
-      status.classList.remove('error');
-      if (!expanded) return;
-      status.textContent = 'Loading source passage…';
-      try {
-        const { passage } = await api('passage', { id: row.passage_id });
-        if (generation !== currentGeneration || version !== requestVersion || !card.isConnected) return;
-        content.textContent = passage.content;
-        locator.textContent = passage.citation_locator || 'Locator not recorded';
-        sourceDetails.hidden = false;
-        status.textContent = '';
-      } catch (error) {
-        if (generation !== currentGeneration || version !== requestVersion || !card.isConnected) return;
-        status.textContent = `${error.message} Collapse and expand to try again.`;
-        status.classList.add('error');
+      element('p', `${row.source_name} · ${row.author_name || 'Author not recorded'} · ${date(row.occurred_at)}`, 'meta'));
+    const multiple = matches.length > 1;
+    if (multiple) body.append(element('p', `${matches.length} matching passages in this record. Open a section to read it.`, 'meta'));
+    for (const [index, match] of matches.entries()) {
+      const section = element(multiple ? 'details' : 'div', undefined, multiple ? 'passage-section' : 'single-passage');
+      if (multiple) {
+        const heading = element('summary');
+        heading.append(element('span', `Matching passage ${index + 1}`, 'passage-label'));
+        const preview = (match.excerpt || '').trim().split(/\r?\n/)[0];
+        if (preview) heading.append(element('span', preview.length > 120 ? `${preview.slice(0, 117)}…` : preview, 'passage-preview'));
+        section.append(heading);
       }
-    });
+      const content = element('p', '', 'excerpt');
+      const locator = element('p', '', 'meta');
+      const sourceDetails = element('details', undefined, 'source-details');
+      sourceDetails.hidden = true;
+      sourceDetails.append(element('summary', 'Source details'), locator);
+      const status = element('p', '', 'message'); status.setAttribute('role', 'status');
+      section.append(status, content, sourceDetails);
+      body.append(section);
+      let requestVersion = 0;
+      async function showPassage(expanded) {
+        const version = ++requestVersion;
+        const currentGeneration = generation;
+        content.textContent = ''; locator.textContent = ''; status.textContent = '';
+        sourceDetails.open = false; sourceDetails.hidden = true;
+        status.classList.remove('error');
+        if (!expanded) return;
+        status.textContent = 'Loading source passage…';
+        const isCurrent = () => generation === currentGeneration && version === requestVersion && card.isConnected && !body.hidden && (!multiple || section.open);
+        try {
+          const { passage } = await api('passage', { id: match.passage_id });
+          if (!isCurrent()) return;
+          content.textContent = passage.content;
+          locator.textContent = passage.citation_locator || 'Locator not recorded';
+          sourceDetails.hidden = false;
+          status.textContent = '';
+        } catch (error) {
+          if (!isCurrent()) return;
+          status.textContent = `${error.message} Collapse and expand to try again.`;
+          status.classList.add('error');
+        }
+      }
+      if (multiple) section.addEventListener('toggle', () => { void showPassage(section.open && !body.hidden); });
+      toggle.addEventListener('click', () => {
+        if (body.hidden || !multiple) void showPassage(!body.hidden);
+      });
+    }
+    const link = sourceLink(row.source_uri); if (link) { const p = element('p'); p.append(link); body.append(p); }
     $('search-results').append(card);
   }
+  return counts;
 }
 async function loadView(name) {
   for (const item of document.querySelectorAll('[data-view]')) { if (item.dataset.view === name) item.setAttribute('aria-current', 'page'); else item.removeAttribute('aria-current'); }
@@ -179,8 +199,8 @@ $('search-form').addEventListener('submit', async event => {
   $('search-results').replaceChildren();
   try {
     const data = await api('search', { query: $('question').value.trim(), includeHistory: $('include-history').checked, order });
-    renderSearch(data.results);
-    message('search-message', `${data.results.length} result${data.results.length === 1 ? '' : 's'} shown, up to ${data.limit}, ${order === 'newest' ? 'newest to oldest by record date' : 'most relevant first'}. These are source excerpts, not an exhaustive review or an AI-generated answer.`);
+    const counts = renderSearch(data.results);
+    message('search-message', `${counts.records} record${counts.records === 1 ? '' : 's'} · ${counts.passages} matching passage${counts.passages === 1 ? '' : 's'}, ${order === 'newest' ? 'newest to oldest by record date' : 'most relevant first'}. Search returns up to ${data.limit} matching passages, grouped by record.`);
   } catch (error) { message('search-message', error.message, true); }
   finally { $('search-button').disabled = false; searchOrder.select.disabled = false; }
 });

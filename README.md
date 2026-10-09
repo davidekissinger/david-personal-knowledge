@@ -1,8 +1,10 @@
 # Personal Knowledge Record (PKR)
 
-Private evidence search with an optional, approval-gated answer layer. Version 0.4.1.
+Private evidence search with an optional, approval-gated answer layer. Version 0.4.2.
 
 ## What this release contains
+
+- Search groups matching passages under one compact, dated record heading. Multi-passage results expand into individual sections with previews; single-passage records still open directly. Record and matching-passage counts are distinct, with the existing 20-passage search limit. Records sharing a title remain separate when their IDs differ.
 
 - PKR app icons, a standalone web app manifest, and an **Add to home screen** guide. Supported browsers can offer an install prompt; others show manual steps for Android, iOS, and desktop.
 - **Add to PKR** request composer: title, information, source, approximate dates, evidence basis, and uncertainty. Copy or download the prepared request for the ChatGPT **Add to My Record** skill. “Use PKR” and “Use personal knowledge record” invoke that skill.
@@ -47,4 +49,4 @@ Default model: `gpt-4.1-mini-2025-04-14`. API usage is separately billed. `store
 
 The earlier release passed 38 Node tests, 22 Python importer tests, and the asset build. The importer also passed rollback-only synthetic integration checks against the existing Supabase project. A real extracted export has been imported with exact content/citation reconciliation and owner/non-owner access checks. Private counts and audit evidence remain in the private archive and Supabase. Full original-ZIP integrity and attachment-content readability remain unverified. No real provider calls were made for this work.
 
-Database migrations in the repository describe the earlier foundation. The operator importer adds no database migration or client write grants. It checks the existing approved, confirmed owner before every transaction. The frontend is version 0.4.1; its import flags describe the unavailable browser import path. The original database AI flags remain legacy read-only metadata; the authenticated answer-status endpoint reports optional generation readiness.
+Database migrations in the repository describe the earlier foundation. The operator importer adds no database migration or client write grants. It checks the existing approved, confirmed owner before every transaction. The frontend is version 0.4.2; its import flags describe the unavailable browser import path. The original database AI flags remain legacy read-only metadata; the authenticated answer-status endpoint reports optional generation readiness.
