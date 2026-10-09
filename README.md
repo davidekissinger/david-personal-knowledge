@@ -1,8 +1,16 @@
 # myPKR · Personal Knowledge Record
 
-Private evidence search with an optional, approval-gated answer layer. Version 0.4.4.
+**My life. My words. My record.** A personal place to keep memories, documents,
+and decisions connected to their sources. Version 0.4.5.
+
+Product language and interaction conventions are defined in **docs/DESIGN.md**
+and linked from **AGENTS.md** so future work continues the “my” positioning.
 
 ## What this release contains
+
+- Personal ownership language throughout navigation, search, capture, sources,
+  decisions, AI evidence review, and installation. “My” names the owner's places
+  and actions; “your” guides them. Imported source wording remains unchanged.
 
 - Fingerprint/passkey-first unlock screen, one-time device setup, automatic prompting after setup, and password fallback. Supabase passkeys must be activated separately; see **docs/PASSKEYS.md** for the exact settings and the remaining Netlify gate.
 
@@ -51,4 +59,4 @@ Default model: `gpt-4.1-mini-2025-04-14`. API usage is separately billed. `store
 
 The earlier release passed 38 Node tests, 22 Python importer tests, and the asset build. The importer also passed rollback-only synthetic integration checks against the existing Supabase project. A real extracted export has been imported with exact content/citation reconciliation and owner/non-owner access checks. Private counts and audit evidence remain in the private archive and Supabase. Full original-ZIP integrity and attachment-content readability remain unverified. No real provider calls were made for this work.
 
-Database migrations in the repository describe the earlier foundation. The operator importer adds no database migration or client write grants. It checks the existing approved, confirmed owner before every transaction. The frontend is version 0.4.4; its import flags describe the unavailable browser import path. The original database AI flags remain legacy read-only metadata; the authenticated answer-status endpoint reports optional generation readiness.
+Database migrations in the repository describe the earlier foundation. The operator importer adds no database migration or client write grants. It checks the existing approved, confirmed owner before every transaction. The frontend is version 0.4.5; its import flags describe the unavailable browser import path. The original database AI flags remain legacy read-only metadata; the authenticated answer-status endpoint reports optional generation readiness.

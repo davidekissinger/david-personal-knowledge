@@ -77,7 +77,7 @@ function renderSearch(rows) {
   $('search-results').replaceChildren();
   const groups = groupSearchResults(rows);
   const counts = { records: groups.length, passages: groups.reduce((total, group) => total + group.matches.length, 0) };
-  if (!groups.length) { empty('search-results', 'No matching passages were found in the accessible indexed records. This does not establish what is in files that have not been imported.'); return counts; }
+  if (!groups.length) { empty('search-results', 'No matches were found in your saved records. Try another name or phrase. Information you have not added yet is not included in this search.'); return counts; }
   for (const { record: row, matches } of groups) {
     const { card, body, toggle } = resultRow(row.title, row.occurred_at);
     body.append(element('span', row.record_status, 'status-tag'),
@@ -141,11 +141,11 @@ async function loadView(name) {
   if (name === 'answer') return answers.open();
   if (name === 'ask' || name === 'capture') return;
   const container = name === 'sources' ? 'source-list' : 'decision-list';
-  empty(container, 'Loading…');
+  empty(container, 'Loading your record…');
   try {
     const { rows } = await api(name);
     $(container).replaceChildren();
-    if (!rows.length) { empty(container, name === 'sources' ? 'No sources have been cataloged for this account.' : 'No accessible decision entries are recorded.'); return; }
+    if (!rows.length) { empty(container, name === 'sources' ? 'Your record has no sources yet. Choose Add to myPKR to prepare your first request.' : 'Your record has no decision entries to show yet.'); return; }
     const getDate = row => name === 'sources' ? row.created_at : row.effective_at;
     $(container).append(element('p', name === 'sources' ? 'Newest first by date cataloged.' : 'Newest first by effective date. Undated entries appear last.', 'fine'));
     for (const row of newestFirst(rows, getDate)) {
@@ -160,7 +160,7 @@ async function loadView(name) {
       }
       $(container).append(card);
     }
-  } catch (error) { empty(container, 'The records could not be loaded. No coverage conclusion can be drawn from this error.'); message('workspace-message', error.message, true); }
+  } catch (error) { empty(container, 'Your records could not be loaded. Try again before drawing conclusions about what is saved.'); message('workspace-message', error.message, true); }
 }
 const answers = createAnswers({ api, showEvidence });
 const capture = createCapture({ findRecord(title) {
@@ -185,7 +185,7 @@ async function acceptSession(data) {
     for (const [id, field] of [['source-count', 'sources'], ['record-count', 'records'], ['passage-count', 'passages'], ['decision-count', 'decisions']]) $(id).textContent = Number(summary[field]).toLocaleString();
     $('login-view').hidden = true; $('workspace').hidden = false;
     await loadView('ask');
-    empty('search-results', summary.passages ? 'Enter search terms to locate source passages.' : 'There are no indexed passages to search yet. Use Add to myPKR to prepare a record request for your ChatGPT skill.');
+    empty('search-results', summary.passages ? 'What would you like to find in your record? Try a name, memory, or phrase.' : 'Your record has no searchable passages yet. Choose Add to myPKR to prepare your first request for ChatGPT.');
     message('login-message'); $('question').focus();
   } catch (error) {
     if (generation === acceptedGeneration && session) await signOut(error.message || 'Sign-in could not be completed. Please try again.');
@@ -221,7 +221,7 @@ $('login-form').addEventListener('submit', async event => {
 $('search-form').addEventListener('submit', async event => {
   event.preventDefault(); if ($('search-button').disabled) return;
   const order = searchOrder.select.value;
-  $('search-button').disabled = true; searchOrder.select.disabled = true; message('search-message', 'Searching accessible indexed records…');
+  $('search-button').disabled = true; searchOrder.select.disabled = true; message('search-message', 'Searching your saved records…');
   $('search-results').replaceChildren();
   try {
     const data = await api('search', { query: $('question').value.trim(), includeHistory: $('include-history').checked, order });

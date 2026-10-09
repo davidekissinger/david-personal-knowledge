@@ -52,6 +52,8 @@
 /* Personal Knowledge Record: request preparation with an explicit ChatGPT handoff. */
 .brand-mark{min-width:46px;width:46px;font-size:14px;letter-spacing:.3px}
 .brand strong{line-height:1.25;display:block}
+.brand-my{color:var(--teal)}
+.record-intro{font-size:13px;color:var(--muted);margin:0;max-width:440px}
 .tabs{flex-wrap:wrap}
 textarea,select{font:inherit;color:var(--navy);background:#fcfdfc;border:1px solid #bcc9c9;border-radius:6px;padding:11px 12px;width:100%;min-width:0}
 textarea{display:block;resize:vertical;line-height:1.5}

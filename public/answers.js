@@ -6,14 +6,14 @@ export function createAnswers({ api, showEvidence }) {
   const tab = make('button', 'Ask AI'); tab.dataset.view = 'answer'; nav.append(tab);
   const panel = make('section', undefined, 'panel'); panel.id = 'view-answer'; panel.hidden = true;
   const heading = make('div', undefined, 'section-heading');
-  const headings = make('div'); headings.append(make('p', 'Evidence-linked answers', 'eyebrow'), make('h2', 'Ask a question about your records'));
+  const headings = make('div'); headings.append(make('p', 'My questions, with sources', 'eyebrow'), make('h2', 'Ask about my record'));
   const badge = make('span', 'Checking setup', 'badge subtle'); heading.append(headings, badge);
   const status = make('p', '', 'message'); status.setAttribute('role', 'status'); status.setAttribute('aria-live', 'polite');
-  const note = make('p', 'First review the selected evidence. Generation is optional and sends this question and the displayed evidence to OpenAI. Ordinary keyword search never sends a model request.', 'muted');
+  const note = make('p', 'Explore a question about your record. Review the selected evidence and decide whether to send your question and those excerpts to OpenAI for an answer. Searching My record does not send a model request.', 'muted');
   const form = make('form'); const label = make('label', 'Your question'); label.htmlFor = 'answer-question';
-  const row = make('div', undefined, 'search-row'); const question = make('input'); question.id = 'answer-question'; question.required = true; question.minLength = 2; question.maxLength = 500; question.placeholder = 'What does the deployment design say about keeping customer data private?';
-  const previewButton = make('button', 'Preview evidence'); previewButton.type = 'submit'; row.append(question, previewButton);
-  const historyLabel = make('label', undefined, 'check'); const history = make('input'); history.type = 'checkbox'; historyLabel.append(history, document.createTextNode(' Include superseded records as historical evidence'));
+  const row = make('div', undefined, 'search-row'); const question = make('input'); question.id = 'answer-question'; question.required = true; question.minLength = 2; question.maxLength = 500; question.placeholder = 'What have I recorded about my career?';
+  const previewButton = make('button', 'Review my evidence'); previewButton.type = 'submit'; row.append(question, previewButton);
+  const historyLabel = make('label', undefined, 'check'); const history = make('input'); history.type = 'checkbox'; historyLabel.append(history, document.createTextNode(' Include earlier versions of my records as historical evidence'));
   form.append(label, row, historyLabel);
   const previewArea = make('div');
   const previewOrder = orderControl('preview-order', 'Order selected evidence');
@@ -27,7 +27,7 @@ export function createAnswers({ api, showEvidence }) {
   previewOrder.select.addEventListener('change', arrangeEvidence);
   const approvalArea = make('div', undefined, 'callout'); approvalArea.hidden = true;
   const consentLabel = make('label', undefined, 'check'); const consent = make('input'); consent.type = 'checkbox';
-  consentLabel.append(consent, document.createTextNode(' I approve sending this question and the displayed evidence to OpenAI for one answer.'));
+  consentLabel.append(consent, document.createTextNode(' I approve sending my question and the displayed evidence to OpenAI for one answer.'));
   const disclosure = make('p', 'This uses separately billed API usage. Response storage is disabled in the request, but provider abuse-monitoring retention may still apply; this is not a zero-retention guarantee. Do not use patient records or other restricted material in this pilot.', 'fine');
   const generate = make('button', 'Generate cited answer'); generate.type = 'button'; generate.disabled = true;
   approvalArea.append(consentLabel, disclosure, generate);
@@ -46,7 +46,7 @@ export function createAnswers({ api, showEvidence }) {
   }
   question.addEventListener('input', invalidate); history.addEventListener('change', invalidate); consent.addEventListener('change', controls);
   form.addEventListener('submit', async event => {
-    event.preventDefault(); invalidate(); const ticket = revision; busy = true; controls(); say('Retrieving evidence within your account. No model call is being made…');
+    event.preventDefault(); invalidate(); const ticket = revision; busy = true; controls(); say('Finding evidence in your record. Nothing is being sent to an AI provider…');
     try {
       const result = await api('answer-preview', { query: question.value.trim(), includeHistory: history.checked });
       if (ticket !== revision) return;

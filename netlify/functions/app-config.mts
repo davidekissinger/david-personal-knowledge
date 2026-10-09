@@ -6,7 +6,7 @@ export default async (request: Request) => {
   try {
     const read = (name: string) => Netlify.env.get(name);
     const { url, key } = publicConfig(read);
-    return json({ supabaseUrl: url, publishableKey: key, version: '0.4.4', importsEnabled: false, aiEnabled: aiAvailability(read).ready });
+    return json({ supabaseUrl: url, publishableKey: key, version: '0.4.5', importsEnabled: false, aiEnabled: aiAvailability(read).ready });
   } catch (error) {
     return json({ error: error instanceof AppError ? error.message : 'Configuration unavailable.' }, 503);
   }
