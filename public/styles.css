@@ -78,3 +78,21 @@ textarea:focus-visible,select:focus-visible{outline:3px solid #2b898d;outline-of
 @media(max-width:850px){.capture-layout{grid-template-columns:minmax(0,1fr) 240px;gap:22px}.capture-guide{padding:18px}}
 @media(max-width:650px){.capture-layout,.capture-fields{grid-template-columns:1fr;gap:0}.capture-guide{margin-top:12px}.capture-next{align-items:flex-start;flex-direction:column;gap:12px}.topbar>.badge{display:none}.brand strong{font-size:16px}.capture-preview .section-heading{gap:10px}footer{gap:16px;flex-wrap:wrap}.tabs button{padding:10px 12px}}
 @media(prefers-color-scheme:dark){textarea,select{background:#111e28;border-color:#647b89}textarea::placeholder{color:#9bafbe;opacity:1}.capture-guide{background:#1c3038}textarea:focus-visible,select:focus-visible{outline-color:#8bdedb}}
+
+/* Device installation remains available before application sign-in. */
+.brand-mark{height:46px;object-fit:cover;flex-shrink:0}
+.topbar-actions{display:flex;align-items:center;gap:16px}
+#install-open{font-size:12px;white-space:nowrap}
+#install-dialog{width:min(540px,92vw)}
+#install-dialog .section-heading{align-items:center;flex-wrap:nowrap}
+#install-dialog h2{margin:0}
+#install-dialog .section-heading button{font-size:12px}
+.install-preview{display:flex;align-items:center;gap:18px;margin:26px 0}
+.install-preview img{border-radius:18px;flex-shrink:0}
+.install-preview p{margin:4px 0 0}
+.install-guide{font-size:14px}
+.install-guide h3{font-size:14px;margin:22px 0 6px}
+.install-guide p{color:var(--muted);margin-bottom:0}
+#install-message:empty{display:none}
+@media(max-width:850px){.topbar-actions .badge{display:none}}
+@media(max-width:650px){.topbar{flex-wrap:wrap;gap:12px}.topbar-actions{margin-left:59px}#install-open{padding:8px 12px}.install-preview{gap:14px}.install-preview strong{font-size:15px}}
