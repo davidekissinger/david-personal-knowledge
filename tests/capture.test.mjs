@@ -82,7 +82,7 @@ test('local text selection preserves supplied text, existing draft, and filename
   const text = '  Original quotation.\n<script>source material</script>\n';
   await s.choose({ name: 'source.MD', size: 200, text: async () => text });
   assert.equal(s.node('pkr-content').value, 'My account of the event.\n\n' + text);
-  assert.equal(s.node('pkr-source').value, 'My recollection\nLocal text file: source.MD');
+  assert.equal(s.node('pkr-source').value, 'My recollection; Local text file: source.MD');
   assert.equal(s.node('pkr-evidence').value, 'mixed');
   assert.equal(s.node('pkr-file').value, '');
   assert.equal(s.node('pkr-preview').hidden, true);
@@ -126,10 +126,18 @@ test('file read failure and source overflow leave existing draft unchanged witho
 
 test('clearing the draft suppresses both late file text and late file errors', async t => {
   const s = captureSurface(t);
+  assert.equal(s.controller.pickingFile, false);
+  s.node('pkr-file-open').emit('click');
+  assert.equal(s.controller.pickingFile, true);
+  s.controller.reset();
+  assert.equal(s.controller.pickingFile, false);
   for (const rejectRead of [false, true]) {
     let finish, fail;
+    s.node('pkr-file-open').emit('click');
+    assert.equal(s.controller.pickingFile, true);
     const pending = s.choose({ name: 'notes.txt', size: 20,
       text: () => new Promise((resolve, reject) => { finish = resolve; fail = reject; }) });
+    assert.equal(s.controller.pickingFile, false);
     s.controller.reset();
     if (rejectRead) fail(new Error('Private source contents')); else finish('Late personal text');
     await pending;
@@ -142,6 +150,10 @@ test('clearing the draft suppresses both late file text and late file errors', a
 
 test('editing a draft or cancelling the picker suppresses a pending file result', async t => {
   const s = captureSurface(t);
+  s.node('pkr-file-open').emit('click');
+  assert.equal(s.controller.pickingFile, true);
+  s.node('pkr-file').emit('cancel');
+  assert.equal(s.controller.pickingFile, false);
   for (const cancelPicker of [false, true]) {
     let finish;
     const pending = s.choose({ name: 'notes.txt', size: 20,

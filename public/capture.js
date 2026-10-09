@@ -42,6 +42,7 @@ export function createCapture({ findRecord }) {
   const fileMessage = $('pkr-file-message');
   let revision = 0;
   let fileRevision = 0;
+  let pickingFile = false;
   let preparedTitle = '';
   function say(text = '', error = false) {
     $('pkr-message').textContent = text;
@@ -58,7 +59,7 @@ export function createCapture({ findRecord }) {
     copy.disabled = false;
     say(hadPreview ? 'Details changed. Prepare an updated request when you are ready.' : '');
   }
-  function reset() { invalidate(); form.reset(); if (fileInput) fileInput.value = ''; say(); }
+  function reset() { pickingFile = false; invalidate(); form.reset(); if (fileInput) fileInput.value = ''; say(); }
   for (const type of ['input', 'change']) form.addEventListener(type, event => {
     // A file selection invalidates its own draft before the asynchronous read.
     if (event.target !== fileInput) invalidate();
@@ -71,11 +72,13 @@ export function createCapture({ findRecord }) {
     fileOpen.addEventListener('click', () => {
       // Opening another picker also cancels the result of an earlier read.
       fileRevision++;
+      pickingFile = true;
       fileSay('');
       fileInput.click();
     });
-    fileInput.addEventListener('cancel', () => { fileRevision++; fileSay(''); });
+    fileInput.addEventListener('cancel', () => { pickingFile = false; fileRevision++; fileSay(''); });
     fileInput.addEventListener('change', async () => {
+      pickingFile = false;
       const file = fileInput.files?.[0];
       fileInput.value = '';
       if (!file) { fileRevision++; fileSay(''); return; }
@@ -103,7 +106,7 @@ export function createCapture({ findRecord }) {
       }
       const currentSource = $('pkr-source').value;
       const label = 'Local text file: ' + file.name;
-      const source = currentSource ? currentSource + '\n' + label : label;
+      const source = currentSource ? currentSource + '; ' + label : label;
       if (source.length > 1000) {
         fileSay('The source field is too long. Shorten it or the file name before adding the file.', true); return;
       }
@@ -151,5 +154,5 @@ export function createCapture({ findRecord }) {
   });
   $('pkr-find').addEventListener('click', () => { if (preparedTitle) findRecord(preparedTitle); });
   $('pkr-clear').addEventListener('click', () => { reset(); $('pkr-title').focus(); });
-  return { reset };
+  return { reset, get pickingFile() { return pickingFile; } };
 }

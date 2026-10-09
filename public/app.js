@@ -305,14 +305,15 @@ $('pkr-paste').addEventListener('click', () => $('pkr-content').focus());
 $('pkr-link').addEventListener('click', () => $('pkr-source').focus());
 $('sign-out').addEventListener('click', () => { void signOut(); });
 $('close-evidence').addEventListener('click', () => $('evidence-dialog').close());
-$('evidence-dialog').addEventListener('close', () => { evidenceAttempt++; });
+$('evidence-dialog').addEventListener('close', () => { if (!$('evidence-dialog').open) evidenceAttempt++; });
 for (const type of ['pointerdown', 'keydown']) document.addEventListener(type, () => { lastActivity = Date.now(); }, { passive: true });
 setInterval(() => { if (session && Date.now() - lastActivity > 15 * 60 * 1000) void signOut('Signed out after 15 minutes of inactivity.'); }, 30000);
 window.addEventListener('pagehide', resetWorkspace);
 window.addEventListener('pageshow', event => { if (event.persisted) void passkeys.unlock({ automatic: true }); });
 document.addEventListener('visibilitychange', () => {
-  // Native passkey dialogs can temporarily hide the page during a ceremony.
-  if (document.hidden && session && !passkeys.busy) {
+  // Native passkey dialogs and file pickers can temporarily hide the page.
+  // Pagehide still clears the session and all drafts unconditionally.
+  if (document.hidden && session && !passkeys.busy && !capture.pickingFile) {
     unlockOnReturn = true; void signOut('myPKR is locked. Unlock to continue.');
   } else if (!document.hidden && unlockOnReturn) {
     unlockOnReturn = false; void passkeys.unlock({ automatic: true });
