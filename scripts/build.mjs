@@ -1,7 +1,8 @@
 import { cp, mkdir, readdir, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
+import { build } from 'esbuild';
 // Copy only the public allowlist. Never copy the repo root or an export directory.
-const textAssets = new Set(['index.html', 'app.js', 'styles.css', 'answers.js', 'list-ui.js', 'capture.js', 'install.js', 'manifest.webmanifest']);
+const textAssets = new Set(['index.html', 'app.js', 'styles.css', 'answers.js', 'list-ui.js', 'capture.js', 'install.js', 'passkeys.js', 'manifest.webmanifest']);
 const iconSizes = new Map([['pkr-icon-192.png', 192], ['pkr-icon-512.png', 512], ['apple-touch-icon.png', 180], ['favicon-32.png', 32]]);
 const allowed = new Set([...textAssets, ...iconSizes.keys()]);
 await rm('dist', { recursive: true, force: true });
@@ -19,5 +20,8 @@ for (const file of files) {
   }
   await cp(join('public', file), join('dist', file));
 }
+// Only this explicit browser entry is bundled; no environment variables or private files.
+await build({ entryPoints: ['src/auth-sdk.js'], outfile: 'dist/auth-sdk.js', bundle: true,
+  platform: 'browser', format: 'esm', target: 'es2022', minify: true, sourcemap: false });
 console.log('Built public application assets. No records or credentials were bundled.');
 

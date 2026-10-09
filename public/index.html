@@ -19,15 +19,24 @@
   <p id="install-status" class="sr-only" role="status" aria-live="polite"></p>
   <main id="main">
     <section id="login-view" class="login-layout">
-      <div class="intro"><p class="eyebrow">Your life, in context.</p><h1>Keep what matters,<br>with its source.</h1><p class="lede">Preserve memories, documents, and decisions in your Personal Knowledge Record. Keep what you know connected to how you know it.</p><div class="principles"><p><strong>Evidence first</strong><br>Read the source passage behind a result.</p><p><strong>History intact</strong><br>Keep earlier versions without confusing them with current decisions.</p><p><strong>Access by approval</strong><br>An account alone does not open this archive.</p></div></div>
-      <div class="panel login-panel"><p class="eyebrow">Application sign-in</p><h2>Enter your workspace</h2><p class="muted">Use your provisioned application account. This is separate from your Netlify team login.</p>
-        <form id="login-form"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="username" required maxlength="320"><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required maxlength="1024"><button id="login-button" type="submit" disabled>Sign in</button></form>
-        <p id="login-message" class="message" role="status" aria-live="polite">Checking application configuration…</p><div class="callout"><strong>Add with myPKR</strong><p>In ChatGPT, say “Use myPKR,” “Use PKR,” or “Use personal knowledge record” with the information you want to keep. Sign in here to prepare a request and explore saved records.</p></div><p class="fine">Session credentials stay in memory. Reloading or closing the page requires a new sign-in.</p>
+      <div class="panel login-panel"><p class="eyebrow">Your Personal Knowledge Record</p><h1>Unlock myPKR</h1>
+        <p class="muted">Use your fingerprint, face, or device PIN with a saved passkey.</p>
+        <button id="passkey-unlock" class="unlock-button" type="button" disabled>
+          <svg viewBox="0 0 48 48" width="42" height="42" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M8 24a16 16 0 0 1 32 0M13 24a11 11 0 0 1 22 0c0 10-3 16-6 20M18 24a6 6 0 0 1 12 0c0 10-2 15-5 20M24 24c0 10-2 15-5 19M8 29c0 5-1 8-3 11M13 29c0 7-2 11-4 14M18 29c0 7-1 10-3 14M40 29c0 5-1 9-3 13M10 12a20 20 0 0 1 28 0"/></svg>
+          Unlock with fingerprint
+        </button>
+        <p id="login-message" class="message" role="status" aria-live="polite">Checking sign-in options…</p>
+        <details id="password-fallback" class="password-fallback"><summary id="password-choice">Use password / first-time setup</summary>
+          <p class="muted">Sign in once, then choose <strong>Set up fingerprint</strong> inside myPKR.</p>
+          <form id="login-form"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="username" required maxlength="320"><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required maxlength="1024"><button id="login-button" type="submit" disabled>Sign in with password</button></form>
+        </details>
+        <p class="fine">Your device controls verification. Your records stay locked until your account is approved.</p>
       </div>
     </section>
     <section id="workspace" hidden>
       <div class="workspace-top"><div><p class="eyebrow">Personal Knowledge Record</p><h1>myPKR</h1></div><div class="account"><span id="account-email"></span><button class="secondary" id="sign-out">Sign out</button></div></div>
       <p id="workspace-message" class="message" role="status" aria-live="polite"></p>
+      <details id="passkey-setup" class="passkey-setup" hidden><summary>Fingerprint sign-in</summary><p class="muted">Create a passkey on this device to unlock myPKR when you open it.</p><button id="passkey-register" class="secondary" type="button" disabled>Set up fingerprint</button><p id="passkey-setup-message" class="message" role="status" aria-live="polite"></p></details>
       <div class="stats"><div><span id="source-count">—</span><small>Cataloged sources</small></div><div><span id="record-count">—</span><small>Available records</small></div><div><span id="passage-count">—</span><small>Indexed passages</small></div><div><span id="decision-count">—</span><small>Decision entries</small></div></div>
       <nav class="tabs" aria-label="Workspace views"><button data-view="ask" aria-current="page">Ask / Search</button><button data-view="capture">Add to myPKR</button><button data-view="sources">Sources</button><button data-view="decisions">Decisions</button></nav>
       <section id="view-ask" class="panel"><div class="section-heading"><div><p class="eyebrow">Follow the evidence</p><h2>Search your indexed records</h2></div><span class="badge subtle">Source passages</span></div><p class="muted">Find the source passages behind your saved records. Search covers records that have been imported and remain accessible. Use Ask AI for an optional answer after reviewing the evidence.</p>
@@ -76,5 +85,5 @@
     <div class="install-guide"><h3>Android · Chrome</h3><p>Open the browser menu <strong>⋮</strong>, choose <strong>Install and create shortcut</strong> or <strong>Add to Home screen</strong>, then follow the prompts.</p><h3>iPhone or iPad · Safari</h3><p>Tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>. Keep the name <strong>myPKR</strong>, enable <strong>Open as Web App</strong> if offered, and tap <strong>Add</strong>.</p><h3>Computer · Chrome or Edge</h3><p>Look for an install icon in the address bar or an install option in the browser menu.</p></div>
     <p class="fine">Open this page in your device’s browser if you are viewing it inside another app. myPKR needs an internet connection and your usual sign-in.</p>
   </dialog>
-  <footer>myPKR · Personal Knowledge Record <span>CareNova · v0.4.3</span></footer>
+  <footer>myPKR · Personal Knowledge Record <span>CareNova · v0.4.4</span></footer>
 </body></html>

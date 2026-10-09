@@ -1,5 +1,6 @@
 import { createAnswers } from './answers.js';
 import { createCapture } from './capture.js';
+import { createPasskeys } from './passkeys.js';
 import { resultRow, newestFirst, orderControl, groupSearchResults } from './list-ui.js';
 const $ = id => document.getElementById(id);
 let configuration = null;
@@ -7,12 +8,15 @@ let session = null;
 let generation = 0;
 let expiryTimer = null;
 let lastActivity = Date.now();
+let loginAttempt = 0;
+let unlockOnReturn = false;
 
 function message(id, text = '', error = false) { $(id).textContent = text; $(id).classList.toggle('error', error); }
 function element(tag, text, className) { const node = document.createElement(tag); if (text !== undefined) node.textContent = String(text); if (className) node.className = className; return node; }
 function date(value) { if (!value) return 'Not recorded'; const d = new Date(value); return Number.isNaN(d.getTime()) ? 'Not recorded' : d.toLocaleString(); }
 function empty(id, text) { $(id).replaceChildren(element('p', text, 'empty')); }
 function resetWorkspace() {
+  loginAttempt++; passkeys.cancel(); message('passkey-setup-message');
   generation++; session = null; clearTimeout(expiryTimer); answers.reset(); capture.reset();
   $('workspace').hidden = true; $('login-view').hidden = false; $('password').value = '';
   for (const id of ['search-results', 'source-list', 'decision-list', 'evidence-content', 'account-email', 'evidence-locator']) $(id).replaceChildren();
@@ -165,22 +169,18 @@ const capture = createCapture({ findRecord(title) {
   $('question').focus();
   $('search-form').requestSubmit();
 } });
-const searchOrder = orderControl('search-order');
-$('search-form').append(searchOrder.container);
-searchOrder.select.addEventListener('change', () => { if ($('question').value.trim().length >= 2) $('search-form').requestSubmit(); });
-$('login-form').addEventListener('submit', async event => {
-  event.preventDefault(); if (!configuration) return;
-  $('login-button').disabled = true; message('login-message', 'Signing in…');
+async function acceptSession(data) {
+  if (document.hidden) throw new Error('Return to myPKR and unlock again.');
+  if (!data.access_token || !data.refresh_token || !data.user?.id) throw new Error('Sign-in was not successful.');
+  session = { accessToken: data.access_token, refreshToken: data.refresh_token, email: data.user.email };
+  generation++; lastActivity = Date.now();
+  const acceptedGeneration = generation;
+  clearTimeout(expiryTimer);
+  expiryTimer = setTimeout(() => { void signOut('Your session expired. Please unlock again.'); }, Math.max(1000, ((Number(data.expires_in) || 3600) - 15) * 1000));
   try {
-    const credentials = { email: $('email').value.trim(), password: $('password').value };
-    $('password').value = '';
-    const response = await fetch(`${configuration.supabaseUrl}/auth/v1/token?grant_type=password`, { method: 'POST', headers: { apikey: configuration.publishableKey, 'Content-Type': 'application/json' }, body: JSON.stringify(credentials), signal: AbortSignal.timeout(15000) });
-    const data = await response.json();
-    if (!response.ok || !data.access_token || !data.user?.id) throw new Error('Sign-in was not successful. Check your application account and password.');
-    session = { accessToken: data.access_token, email: data.user.email };
-    generation++; lastActivity = Date.now();
-    expiryTimer = setTimeout(() => { void signOut('Your session expired. Please sign in again.'); }, Math.max(1000, ((Number(data.expires_in) || 3600) - 15) * 1000));
     const summary = await api('summary');
+    if (generation !== acceptedGeneration || !session) throw new Error('Session changed. Please sign in again.');
+    if (document.hidden) throw new Error('Return to myPKR and unlock again.');
     $('account-email').textContent = session.email || 'Approved account';
     for (const [id, field] of [['source-count', 'sources'], ['record-count', 'records'], ['passage-count', 'passages'], ['decision-count', 'decisions']]) $(id).textContent = Number(summary[field]).toLocaleString();
     $('login-view').hidden = true; $('workspace').hidden = false;
@@ -188,6 +188,32 @@ $('login-form').addEventListener('submit', async event => {
     empty('search-results', summary.passages ? 'Enter search terms to locate source passages.' : 'There are no indexed passages to search yet. Use Add to myPKR to prepare a record request for your ChatGPT skill.');
     message('login-message'); $('question').focus();
   } catch (error) {
+    if (generation === acceptedGeneration && session) await signOut(error.message || 'Sign-in could not be completed. Please try again.');
+    throw error;
+  }
+}
+const passkeys = createPasskeys({ window, document, acceptSession, getSession: () => session,
+  beforeUnlock: () => { loginAttempt++; },
+  ceremony: async (...args) => { const { passkeyCeremony } = await import('./auth-sdk.js'); return passkeyCeremony(...args); },
+});
+const searchOrder = orderControl('search-order');
+$('search-form').append(searchOrder.container);
+searchOrder.select.addEventListener('change', () => { if ($('question').value.trim().length >= 2) $('search-form').requestSubmit(); });
+$('login-form').addEventListener('submit', async event => {
+  event.preventDefault(); if (!configuration) return;
+  passkeys.cancel();
+  const attempt = ++loginAttempt;
+  $('login-button').disabled = true; message('login-message', 'Signing in…');
+  try {
+    const credentials = { email: $('email').value.trim(), password: $('password').value };
+    $('password').value = '';
+    const response = await fetch(`${configuration.supabaseUrl}/auth/v1/token?grant_type=password`, { method: 'POST', headers: { apikey: configuration.publishableKey, 'Content-Type': 'application/json' }, body: JSON.stringify(credentials), signal: AbortSignal.timeout(15000) });
+    const data = await response.json();
+    if (attempt !== loginAttempt) return;
+    if (!response.ok || !data.access_token || !data.user?.id) throw new Error('Sign-in was not successful. Check your application account and password.');
+    await acceptSession(data);
+  } catch (error) {
+    if (attempt !== loginAttempt) return;
     if (session) await signOut('');
     message('login-message', error.message || 'Sign-in is unavailable.', true);
   } finally { $('login-button').disabled = !configuration; }
@@ -211,10 +237,19 @@ $('close-evidence').addEventListener('click', () => $('evidence-dialog').close()
 for (const type of ['pointerdown', 'keydown']) document.addEventListener(type, () => { lastActivity = Date.now(); }, { passive: true });
 setInterval(() => { if (session && Date.now() - lastActivity > 15 * 60 * 1000) void signOut('Signed out after 15 minutes of inactivity.'); }, 30000);
 window.addEventListener('pagehide', resetWorkspace);
+window.addEventListener('pageshow', event => { if (event.persisted) void passkeys.unlock({ automatic: true }); });
+document.addEventListener('visibilitychange', () => {
+  // Native passkey dialogs can temporarily hide the page during a ceremony.
+  if (document.hidden && session && !passkeys.busy) {
+    unlockOnReturn = true; void signOut('myPKR is locked. Unlock to continue.');
+  } else if (!document.hidden && unlockOnReturn) {
+    unlockOnReturn = false; void passkeys.unlock({ automatic: true });
+  }
+});
 try {
   const response = await fetch('/api/app-config', { cache: 'no-store', signal: AbortSignal.timeout(10000) });
   const data = await response.json();
   if (!response.ok || !data.supabaseUrl || !data.publishableKey) throw new Error();
   configuration = data; $('login-button').disabled = false;
-  message('login-message', 'Ready for your provisioned and approved application account.');
+  await passkeys.initialize(configuration);
 } catch { message('login-message', 'Application configuration is unavailable. A completed Netlify deployment and Functions-scoped configuration are required.', true); }

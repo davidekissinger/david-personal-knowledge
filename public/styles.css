@@ -94,6 +94,15 @@ textarea:focus-visible,select:focus-visible{outline:3px solid #2b898d;outline-of
 .install-guide h3{font-size:14px;margin:22px 0 6px}
 .install-guide p{color:var(--muted);margin-bottom:0}
 #install-message:empty{display:none}
+.login-layout{display:block;max-width:470px;margin:0 auto;padding:42px 0}
+.login-panel h1{font-size:32px;letter-spacing:-1px}
+.unlock-button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;width:100%;min-height:132px;margin-top:24px;font-size:17px}
+.password-fallback{border-top:1px solid var(--line);padding-top:18px;font-size:14px}
+.password-fallback>summary,.passkey-setup>summary{cursor:pointer;color:var(--teal);font-weight:650}
+.password-fallback>summary:focus-visible,.passkey-setup>summary:focus-visible{outline:3px solid var(--teal);outline-offset:4px}
+.password-fallback>.muted,.passkey-setup>.muted{margin:16px 0 0}
+.passkey-setup{margin:12px 0;font-size:13px}
+.passkey-setup button{margin-top:12px;font-size:13px}
 .passage-section{border-top:1px solid var(--line);padding:8px 0;font-size:13px}
 .passage-section>summary{cursor:pointer;overflow-wrap:anywhere}
 .passage-section>summary:focus-visible{outline:3px solid #2b898d;outline-offset:3px}
