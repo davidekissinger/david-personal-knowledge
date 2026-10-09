@@ -29,10 +29,10 @@ export function setupInstall(window, document) {
       await prompt.prompt();
       const { outcome } = await prompt.userChoice;
       if (!installed) message.textContent = outcome === 'accepted'
-        ? 'Follow any remaining browser prompts to finish installing PKR.'
-        : 'You can add PKR later using your browser menu.';
+        ? 'Follow any remaining browser prompts to finish installing myPKR.'
+        : 'You can add myPKR later using your browser menu.';
     } catch {
-      message.textContent = 'Use the browser-menu steps below to add PKR.';
+      message.textContent = 'Use the browser-menu steps below to add myPKR.';
     } finally {
       install.hidden = installed || !deferredPrompt;
       install.disabled = false;
@@ -45,7 +45,7 @@ export function setupInstall(window, document) {
     open.hidden = true;
     install.hidden = true;
     if (dialog.open) dialog.close();
-    status.textContent = 'PKR is ready on your device.';
+    status.textContent = 'myPKR is ready on your device.';
   }
 
   window.addEventListener('appinstalled', markInstalled);

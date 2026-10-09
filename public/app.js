@@ -185,7 +185,7 @@ $('login-form').addEventListener('submit', async event => {
     for (const [id, field] of [['source-count', 'sources'], ['record-count', 'records'], ['passage-count', 'passages'], ['decision-count', 'decisions']]) $(id).textContent = Number(summary[field]).toLocaleString();
     $('login-view').hidden = true; $('workspace').hidden = false;
     await loadView('ask');
-    empty('search-results', summary.passages ? 'Enter search terms to locate source passages.' : 'There are no indexed passages to search yet. Use Add to PKR to prepare a record request for your ChatGPT skill.');
+    empty('search-results', summary.passages ? 'Enter search terms to locate source passages.' : 'There are no indexed passages to search yet. Use Add to myPKR to prepare a record request for your ChatGPT skill.');
     message('login-message'); $('question').focus();
   } catch (error) {
     if (session) await signOut('');

@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "Personal Knowledge Record",
-  "short_name": "PKR",
-  "description": "Your private archive of memories, documents, and decisions, connected to their sources.",
+  "name": "myPKR",
+  "short_name": "myPKR",
+  "description": "Personal Knowledge Record — your private archive of memories, documents, and decisions, connected to their sources.",
   "lang": "en",
   "start_url": "/",
   "scope": "/",

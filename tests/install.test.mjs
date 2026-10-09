@@ -47,7 +47,7 @@ test('accepting a prompt does not claim installation until the browser confirms 
   window.emit('appinstalled');
   assert.equal(nodes['install-open'].hidden, true);
   assert.equal(nodes['install-dialog'].open, false);
-  assert.equal(nodes['install-status'].textContent, 'PKR is ready on your device.');
+  assert.equal(nodes['install-status'].textContent, 'myPKR is ready on your device.');
 });
 
 test('dismissed or failed prompts preserve manual installation and allow a fresh prompt', async () => {

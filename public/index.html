@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow,noarchive">
-  <title>PKR · Personal Knowledge Record</title>
-  <meta name="description" content="Your private Personal Knowledge Record. Preserve what matters, keep its sources, and explore your saved records.">
+  <title>myPKR · Personal Knowledge Record</title>
+  <meta name="description" content="myPKR — your private Personal Knowledge Record. Preserve what matters, keep its sources, and explore your saved records.">
   <meta name="theme-color" content="#153148">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="PKR">
+  <meta name="apple-mobile-web-app-title" content="myPKR">
   <link rel="manifest" href="/manifest.webmanifest" crossorigin="use-credentials">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
@@ -15,27 +15,27 @@
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
-  <header class="topbar"><div class="brand"><img class="brand-mark" src="/pkr-icon-192.png" width="46" height="46" alt=""><div><strong>Personal Knowledge Record</strong><small>PKR · Your private archive</small></div></div><div class="topbar-actions"><span class="badge">Private by design</span><button id="install-open" type="button" class="secondary" aria-haspopup="dialog" aria-controls="install-dialog" hidden>Add to home screen</button></div></header>
+  <header class="topbar"><div class="brand"><img class="brand-mark" src="/pkr-icon-192.png" width="46" height="46" alt=""><div><strong>myPKR</strong><small>Personal Knowledge Record</small></div></div><div class="topbar-actions"><span class="badge">Private by design</span><button id="install-open" type="button" class="secondary" aria-haspopup="dialog" aria-controls="install-dialog" hidden>Add to home screen</button></div></header>
   <p id="install-status" class="sr-only" role="status" aria-live="polite"></p>
   <main id="main">
     <section id="login-view" class="login-layout">
       <div class="intro"><p class="eyebrow">Your life, in context.</p><h1>Keep what matters,<br>with its source.</h1><p class="lede">Preserve memories, documents, and decisions in your Personal Knowledge Record. Keep what you know connected to how you know it.</p><div class="principles"><p><strong>Evidence first</strong><br>Read the source passage behind a result.</p><p><strong>History intact</strong><br>Keep earlier versions without confusing them with current decisions.</p><p><strong>Access by approval</strong><br>An account alone does not open this archive.</p></div></div>
       <div class="panel login-panel"><p class="eyebrow">Application sign-in</p><h2>Enter your workspace</h2><p class="muted">Use your provisioned application account. This is separate from your Netlify team login.</p>
         <form id="login-form"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="username" required maxlength="320"><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required maxlength="1024"><button id="login-button" type="submit" disabled>Sign in</button></form>
-        <p id="login-message" class="message" role="status" aria-live="polite">Checking application configuration…</p><div class="callout"><strong>Add with PKR</strong><p>In ChatGPT, say “Use PKR” or “Use personal knowledge record” with the information you want to keep. Sign in here to prepare a request and explore saved records.</p></div><p class="fine">Session credentials stay in memory. Reloading or closing the page requires a new sign-in.</p>
+        <p id="login-message" class="message" role="status" aria-live="polite">Checking application configuration…</p><div class="callout"><strong>Add with myPKR</strong><p>In ChatGPT, say “Use myPKR,” “Use PKR,” or “Use personal knowledge record” with the information you want to keep. Sign in here to prepare a request and explore saved records.</p></div><p class="fine">Session credentials stay in memory. Reloading or closing the page requires a new sign-in.</p>
       </div>
     </section>
     <section id="workspace" hidden>
-      <div class="workspace-top"><div><p class="eyebrow">Personal Knowledge Record</p><h1>Your PKR</h1></div><div class="account"><span id="account-email"></span><button class="secondary" id="sign-out">Sign out</button></div></div>
+      <div class="workspace-top"><div><p class="eyebrow">Personal Knowledge Record</p><h1>myPKR</h1></div><div class="account"><span id="account-email"></span><button class="secondary" id="sign-out">Sign out</button></div></div>
       <p id="workspace-message" class="message" role="status" aria-live="polite"></p>
       <div class="stats"><div><span id="source-count">—</span><small>Cataloged sources</small></div><div><span id="record-count">—</span><small>Available records</small></div><div><span id="passage-count">—</span><small>Indexed passages</small></div><div><span id="decision-count">—</span><small>Decision entries</small></div></div>
-      <nav class="tabs" aria-label="Workspace views"><button data-view="ask" aria-current="page">Ask / Search</button><button data-view="capture">Add to PKR</button><button data-view="sources">Sources</button><button data-view="decisions">Decisions</button></nav>
+      <nav class="tabs" aria-label="Workspace views"><button data-view="ask" aria-current="page">Ask / Search</button><button data-view="capture">Add to myPKR</button><button data-view="sources">Sources</button><button data-view="decisions">Decisions</button></nav>
       <section id="view-ask" class="panel"><div class="section-heading"><div><p class="eyebrow">Follow the evidence</p><h2>Search your indexed records</h2></div><span class="badge subtle">Source passages</span></div><p class="muted">Find the source passages behind your saved records. Search covers records that have been imported and remain accessible. Use Ask AI for an optional answer after reviewing the evidence.</p>
         <form id="search-form"><label for="question">Question or search terms</label><div class="search-row"><input id="question" minlength="2" maxlength="500" placeholder="Search for a project, decision, or exact phrase" required><button type="submit" id="search-button">Find evidence</button></div><label class="check"><input id="include-history" type="checkbox"> Include superseded record versions</label></form><p id="search-message" class="message" role="status" aria-live="polite"></p><div id="search-results"></div>
       </section>
       <section id="view-capture" class="panel" hidden aria-labelledby="capture-title">
-        <div class="section-heading"><div><p class="eyebrow">Preserve what matters</p><h2 id="capture-title">Add to your PKR</h2></div><span class="badge subtle">Save through ChatGPT</span></div>
-        <p class="muted capture-intro">Prepare a request here, then paste it into ChatGPT. The PKR skill checks sources and duplicates, saves the record when available, and verifies the result.</p>
+        <div class="section-heading"><div><p class="eyebrow">Preserve what matters</p><h2 id="capture-title">Add to myPKR</h2></div><span class="badge subtle">Save through ChatGPT</span></div>
+        <p class="muted capture-intro">Prepare a request here, then paste it into ChatGPT. The myPKR skill checks sources and duplicates, saves the record when available, and verifies the result.</p>
         <div class="capture-layout">
           <div>
             <form id="pkr-form">
@@ -44,13 +44,13 @@
               <div class="capture-fields"><div><label for="pkr-source">Source <span class="optional">(optional)</span></label><input id="pkr-source" maxlength="1000" placeholder="A link, document name, or recollection"></div><div><label for="pkr-timeframe">Date or timeframe <span class="optional">(optional)</span></label><input id="pkr-timeframe" maxlength="300" placeholder="Exact date, approximate year, or unknown"></div></div>
               <label for="pkr-evidence">How do you know this?</label><select id="pkr-evidence"><option value="recollection">My recollection</option><option value="source">A document or published source</option><option value="mixed">A mix of recollection and sources</option></select>
               <label for="pkr-uncertainty">Uncertainty or corrections <span class="optional">(optional)</span></label><textarea id="pkr-uncertainty" maxlength="1500" rows="2" placeholder="What is approximate, disputed, or still needs verification?"></textarea>
-              <div class="capture-actions"><button type="submit">Prepare PKR request</button><button type="button" class="secondary" id="pkr-clear">Clear draft</button></div>
+              <div class="capture-actions"><button type="submit">Prepare myPKR request</button><button type="button" class="secondary" id="pkr-clear">Clear draft</button></div>
             </form>
             <p id="pkr-message" class="message" role="status" aria-live="polite"></p>
           </div>
           <aside class="capture-guide" aria-label="How adding a record works">
-            <p class="eyebrow">One phrase starts it</p><p class="capture-phrase">“Use PKR”</p><p class="muted">“Use personal knowledge record” works too. Both use your <strong>Add to My Record</strong> skill in ChatGPT.</p>
-            <ol class="capture-steps"><li><strong>Prepare</strong><span>Keep the facts, their sources, and what is uncertain together.</span></li><li><strong>Send in ChatGPT</strong><span>Paste your request into a chat where the PKR skill is available.</span></li><li><strong>Check the result</strong><span>A record is saved only after the skill verifies it. If blocked, it provides a pending import.</span></li></ol>
+            <p class="eyebrow">One phrase starts it</p><p class="capture-phrase">“Use myPKR”</p><p class="muted">“Use PKR” and “Use personal knowledge record” work too. All three use your <strong>Add to My Record</strong> skill in ChatGPT.</p>
+            <ol class="capture-steps"><li><strong>Prepare</strong><span>Keep the facts, their sources, and what is uncertain together.</span></li><li><strong>Send in ChatGPT</strong><span>Paste your request into a chat where the myPKR skill is available.</span></li><li><strong>Check the result</strong><span>A record is saved only after the skill verifies it. If blocked, it provides a pending import.</span></li></ol>
             <p class="fine">This page prepares a request. It does not upload a document, send it to ChatGPT, or save it to your archive.</p>
           </aside>
         </div>
@@ -62,19 +62,19 @@
           <div class="capture-next"><p class="muted">Once ChatGPT confirms the save, look for the record in your archive.</p><button type="button" class="secondary" id="pkr-find">Find this record</button></div>
         </section>
       </section>
-      <section id="view-sources" class="panel" hidden><div class="section-heading"><div><p class="eyebrow">Know the coverage</p><h2>Source catalog</h2></div><button type="button" data-open-view="capture">Add to PKR</button></div><p class="muted">A connected account is not proof that all its contents are indexed. This catalog shows imported sources and their processing states. At most 100 entries are displayed.</p><div id="source-list"></div></section>
+      <section id="view-sources" class="panel" hidden><div class="section-heading"><div><p class="eyebrow">Know the coverage</p><h2>Source catalog</h2></div><button type="button" data-open-view="capture">Add to myPKR</button></div><p class="muted">A connected account is not proof that all its contents are indexed. This catalog shows imported sources and their processing states. At most 100 entries are displayed.</p><div id="source-list"></div></section>
       <section id="view-decisions" class="panel" hidden><div class="section-heading"><div><p class="eyebrow">Keep the distinctions</p><h2>Decisions and corrections</h2></div><span class="badge subtle">Read only</span></div><p class="muted">Proposed, confirmed, superseded, and disputed statements remain distinct. Status is a recorded designation, not independent verification. At most 100 entries are displayed.</p><div id="decision-list"></div></section>
-      <p class="fine workspace-note">Original sources and closed records stay intact. Add to PKR prepares a request for your ChatGPT skill. Ask AI sends selected evidence to a model provider only with your approval.</p>
+      <p class="fine workspace-note">Original sources and closed records stay intact. Add to myPKR prepares a request for your ChatGPT skill. Ask AI sends selected evidence to a model provider only with your approval.</p>
     </section>
   </main>
   <dialog id="evidence-dialog"><div class="section-heading"><h2>Source passage</h2><button id="close-evidence" class="secondary">Close</button></div><blockquote id="evidence-content"></blockquote><details id="evidence-details" class="source-details" hidden><summary>Source details</summary><p id="evidence-locator" class="meta"></p></details><p id="evidence-message" class="message" role="status"></p></dialog>
   <dialog id="install-dialog" aria-labelledby="install-title">
-    <div class="section-heading"><h2 id="install-title">Keep PKR close</h2><form method="dialog"><button class="secondary" autofocus>Close</button></form></div>
-    <div class="install-preview"><img src="/pkr-icon-192.png" width="80" height="80" alt="PKR app icon"><div><strong>Personal Knowledge Record</strong><p class="muted">One tap from your home screen.</p></div></div>
-    <button id="install-native" type="button" hidden>Install PKR</button>
+    <div class="section-heading"><h2 id="install-title">Keep myPKR close</h2><form method="dialog"><button class="secondary" autofocus>Close</button></form></div>
+    <div class="install-preview"><img src="/pkr-icon-192.png" width="80" height="80" alt="myPKR app icon"><div><strong>myPKR</strong><p class="muted">Personal Knowledge Record</p></div></div>
+    <button id="install-native" type="button" hidden>Install myPKR</button>
     <p id="install-message" class="message" role="status" aria-live="polite"></p>
-    <div class="install-guide"><h3>Android · Chrome</h3><p>Open the browser menu <strong>⋮</strong>, choose <strong>Install and create shortcut</strong> or <strong>Add to Home screen</strong>, then follow the prompts.</p><h3>iPhone or iPad · Safari</h3><p>Tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>. Keep the name <strong>PKR</strong>, enable <strong>Open as Web App</strong> if offered, and tap <strong>Add</strong>.</p><h3>Computer · Chrome or Edge</h3><p>Look for an install icon in the address bar or an install option in the browser menu.</p></div>
-    <p class="fine">Open this page in your device’s browser if you are viewing it inside another app. PKR needs an internet connection and your usual sign-in.</p>
+    <div class="install-guide"><h3>Android · Chrome</h3><p>Open the browser menu <strong>⋮</strong>, choose <strong>Install and create shortcut</strong> or <strong>Add to Home screen</strong>, then follow the prompts.</p><h3>iPhone or iPad · Safari</h3><p>Tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>. Keep the name <strong>myPKR</strong>, enable <strong>Open as Web App</strong> if offered, and tap <strong>Add</strong>.</p><h3>Computer · Chrome or Edge</h3><p>Look for an install icon in the address bar or an install option in the browser menu.</p></div>
+    <p class="fine">Open this page in your device’s browser if you are viewing it inside another app. myPKR needs an internet connection and your usual sign-in.</p>
   </dialog>
-  <footer>PKR · Personal Knowledge Record <span>CareNova · v0.4.2</span></footer>
+  <footer>myPKR · Personal Knowledge Record <span>CareNova · v0.4.3</span></footer>
 </body></html>

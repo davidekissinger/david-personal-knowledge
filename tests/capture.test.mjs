@@ -7,14 +7,14 @@ const draft = { title: 'First pottery class', content: 'I recall spring 2008 or 
   uncertainty: 'I do not know which year.' };
 const payload = request => JSON.parse(request.slice(request.indexOf('{')));
 
-test('PKR request preserves uncertain dates and labels recollection accurately', () => {
+test('myPKR request preserves uncertain dates and labels recollection accurately', () => {
   const request = buildPkrRequest(draft);
   const data = payload(request);
   assert.equal(data.date_or_timeframe, draft.timeframe);
   assert.equal(data.information, draft.content);
   assert.equal(data.uncertainty_or_corrections, draft.uncertainty);
   assert.equal(data.evidence_basis, 'My recollection; not independently verified');
-  assert.match(request, /^Use PKR \(Personal Knowledge Record\)/);
+  assert.match(request, /^Use myPKR \(Personal Knowledge Record\)/);
   assert.match(request, /report saved only after verifying the result/);
 });
 
