@@ -1,4 +1,5 @@
 import { createAnswers } from './answers.js';
+import { createCapture } from './capture.js';
 import { resultRow, newestFirst, orderControl } from './list-ui.js';
 const $ = id => document.getElementById(id);
 let configuration = null;
@@ -12,7 +13,7 @@ function element(tag, text, className) { const node = document.createElement(tag
 function date(value) { if (!value) return 'Not recorded'; const d = new Date(value); return Number.isNaN(d.getTime()) ? 'Not recorded' : d.toLocaleString(); }
 function empty(id, text) { $(id).replaceChildren(element('p', text, 'empty')); }
 function resetWorkspace() {
-  generation++; session = null; clearTimeout(expiryTimer); answers.reset();
+  generation++; session = null; clearTimeout(expiryTimer); answers.reset(); capture.reset();
   $('workspace').hidden = true; $('login-view').hidden = false; $('password').value = '';
   for (const id of ['search-results', 'source-list', 'decision-list', 'evidence-content', 'account-email', 'evidence-locator']) $(id).replaceChildren();
   for (const id of ['source-count', 'record-count', 'passage-count', 'decision-count']) $(id).textContent = '—';
@@ -111,10 +112,10 @@ function renderSearch(rows) {
 }
 async function loadView(name) {
   for (const item of document.querySelectorAll('[data-view]')) { if (item.dataset.view === name) item.setAttribute('aria-current', 'page'); else item.removeAttribute('aria-current'); }
-  for (const view of ['ask', 'answer', 'sources', 'decisions']) $(`view-${view}`).hidden = view !== name;
+  for (const view of ['ask', 'answer', 'capture', 'sources', 'decisions']) $(`view-${view}`).hidden = view !== name;
   message('workspace-message');
   if (name === 'answer') return answers.open();
-  if (name === 'ask') return;
+  if (name === 'ask' || name === 'capture') return;
   const container = name === 'sources' ? 'source-list' : 'decision-list';
   empty(container, 'Loading…');
   try {
@@ -138,6 +139,12 @@ async function loadView(name) {
   } catch (error) { empty(container, 'The records could not be loaded. No coverage conclusion can be drawn from this error.'); message('workspace-message', error.message, true); }
 }
 const answers = createAnswers({ api, showEvidence });
+const capture = createCapture({ findRecord(title) {
+  void loadView('ask');
+  $('question').value = title;
+  $('question').focus();
+  $('search-form').requestSubmit();
+} });
 const searchOrder = orderControl('search-order');
 $('search-form').append(searchOrder.container);
 searchOrder.select.addEventListener('change', () => { if ($('question').value.trim().length >= 2) $('search-form').requestSubmit(); });
@@ -158,7 +165,7 @@ $('login-form').addEventListener('submit', async event => {
     for (const [id, field] of [['source-count', 'sources'], ['record-count', 'records'], ['passage-count', 'passages'], ['decision-count', 'decisions']]) $(id).textContent = Number(summary[field]).toLocaleString();
     $('login-view').hidden = true; $('workspace').hidden = false;
     await loadView('ask');
-    empty('search-results', summary.passages ? 'Enter search terms to locate source passages.' : 'There are no indexed passages to search yet. Imports remain disabled until the access checks and controlled import review are complete.');
+    empty('search-results', summary.passages ? 'Enter search terms to locate source passages.' : 'There are no indexed passages to search yet. Use Add to PKR to prepare a record request for your ChatGPT skill.');
     message('login-message'); $('question').focus();
   } catch (error) {
     if (session) await signOut('');
@@ -178,6 +185,7 @@ $('search-form').addEventListener('submit', async event => {
   finally { $('search-button').disabled = false; searchOrder.select.disabled = false; }
 });
 for (const button of document.querySelectorAll('[data-view]')) button.addEventListener('click', () => { void loadView(button.dataset.view); });
+for (const button of document.querySelectorAll('[data-open-view]')) button.addEventListener('click', () => { void loadView(button.dataset.openView); $('pkr-title').focus(); });
 $('sign-out').addEventListener('click', () => { void signOut(); });
 $('close-evidence').addEventListener('click', () => $('evidence-dialog').close());
 for (const type of ['pointerdown', 'keydown']) document.addEventListener(type, () => { lastActivity = Date.now(); }, { passive: true });

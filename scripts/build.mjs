@@ -1,7 +1,7 @@
 import { cp, mkdir, readdir, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 // Copy only the public allowlist. Never copy the repo root or an export directory.
-const allowed = new Set(['index.html', 'app.js', 'styles.css', 'answers.js', 'list-ui.js']);
+const allowed = new Set(['index.html', 'app.js', 'styles.css', 'answers.js', 'list-ui.js', 'capture.js']);
 await rm('dist', { recursive: true, force: true });
 await mkdir('dist', { recursive: true });
 const files = await readdir('public');

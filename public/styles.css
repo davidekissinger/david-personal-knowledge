@@ -48,3 +48,33 @@
   button:focus-visible,input:focus-visible,a:focus-visible,summary:focus-visible{outline-color:#8bdedb}
   dialog::backdrop{background:#000a}
 }
+
+/* Personal Knowledge Record: request preparation with an explicit ChatGPT handoff. */
+.brand-mark{min-width:46px;width:46px;font-size:14px;letter-spacing:.3px}
+.brand strong{line-height:1.25;display:block}
+.tabs{flex-wrap:wrap}
+textarea,select{font:inherit;color:var(--navy);background:#fcfdfc;border:1px solid #bcc9c9;border-radius:6px;padding:11px 12px;width:100%;min-width:0}
+textarea{display:block;resize:vertical;line-height:1.5}
+textarea:focus-visible,select:focus-visible{outline:3px solid #2b898d;outline-offset:3px}
+.capture-intro{max-width:750px}
+.capture-layout{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:36px;align-items:start}
+.capture-fields{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.optional{color:var(--muted);font-weight:400}
+.field-hint{font-size:12px;color:var(--muted);margin:7px 0 0}
+.capture-actions{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-top:22px}
+.capture-actions a{font-size:13px}
+.capture-guide{background:#f3f6f3;border-radius:10px;padding:22px;margin-top:18px}
+.capture-phrase{font-size:25px;font-weight:650;letter-spacing:-.6px;margin-bottom:12px;color:var(--navy)}
+.capture-steps{padding-left:22px;margin:24px 0 0;font-size:13px;color:var(--teal)}
+.capture-steps li{padding-left:4px;margin-bottom:18px}
+.capture-steps strong{display:block;color:var(--navy)}
+.capture-steps span{display:block;color:var(--muted);margin-top:3px}
+.capture-preview{border-top:1px solid var(--line);padding-top:24px;margin-top:14px}
+.capture-preview h3{font-size:21px;letter-spacing:-.3px;margin:0}
+#pkr-request{font-size:13px;line-height:1.6}
+.capture-next{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-top:26px;padding-top:20px;border-top:1px solid var(--line)}
+.capture-next p{margin:0}.capture-next button{flex-shrink:0;font-size:13px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:850px){.capture-layout{grid-template-columns:minmax(0,1fr) 240px;gap:22px}.capture-guide{padding:18px}}
+@media(max-width:650px){.capture-layout,.capture-fields{grid-template-columns:1fr;gap:0}.capture-guide{margin-top:12px}.capture-next{align-items:flex-start;flex-direction:column;gap:12px}.topbar>.badge{display:none}.brand strong{font-size:16px}.capture-preview .section-heading{gap:10px}footer{gap:16px;flex-wrap:wrap}.tabs button{padding:10px 12px}}
+@media(prefers-color-scheme:dark){textarea,select{background:#111e28;border-color:#647b89}textarea::placeholder{color:#9bafbe;opacity:1}.capture-guide{background:#1c3038}textarea:focus-visible,select:focus-visible{outline-color:#8bdedb}}

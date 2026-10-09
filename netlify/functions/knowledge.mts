@@ -21,7 +21,7 @@ export default async (request: Request) => {
         if (!rows.length) throw new AppError(404, 'This passage is unavailable or access was revoked.');
         return json({ passage: rows[0] });
       }
-      throw new AppError(400, 'Unsupported read action. Imports are disabled.');
+      throw new AppError(400, 'Unsupported read action. Use the PKR skill to add records.');
     }
     const action = new URL(request.url).searchParams.get('action') ?? 'summary';
     if (action === 'summary') return json(await client.call('/rest/v1/rpc/knowledge_summary', { method: 'POST', body: '{}' }));

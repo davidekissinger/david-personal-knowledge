@@ -34,11 +34,6 @@ export function createAnswers({ api, showEvidence }) {
   const output = make('div'); output.setAttribute('aria-live', 'polite');
   panel.append(heading, note, form, status, previewArea, previewOrder.container, previewList, approvalArea, output);
   document.getElementById('view-ask').after(panel);
-  const footer = document.querySelector('footer span'); if (footer) footer.textContent = 'v0.3.0';
-  const loginNote = document.querySelector('.login-panel .callout p');
-  if (loginNote) loginNote.textContent = 'Use your approved application account. There is no public registration or uploader. The optional Ask AI panel requires separate server setup and evidence approval.';
-  const workspaceNote = document.querySelector('.workspace-note');
-  if (workspaceNote) workspaceNote.textContent = 'Source records remain read-only. Closed records remain closed. Only an explicitly approved Ask AI request sends selected evidence to a model provider.';
   let preview = null; let revision = 0; let busy = false; let ready = false;
   function say(text, error = false) { status.textContent = text; status.classList.toggle('error', error); }
   function controls() { question.disabled = busy; history.disabled = busy; previewButton.disabled = busy; consent.disabled = busy; generate.disabled = busy || !ready || !preview?.evidence.length || !consent.checked; }
