@@ -106,3 +106,15 @@ distinctions remain intact. Update this guide when the owner changes direction.
 
 This guide governs product presentation. It does not change authentication,
 database permissions, import schemas, or the wording of historical records.
+
+## Modular upgrades and portable vaults (design direction, 2026-10-16)
+
+The product's personal-ownership promise extends beyond the interface: each owner must ultimately have a secure, portable Personal Knowledge Vault. Follow [ADR-001: Modular vaults and upgrades](ADR-001-MODULAR-VAULTS-AND-UPGRADES.md) for the accepted target architecture, release gates and future implementation backlog.
+
+- **Separate capabilities from infrastructure.** Personal/Plus-style feature entitlements are independent of Managed Shared, Managed Dedicated and Customer Operated deployment choices. No user should need separate GitHub, Netlify or Supabase accounts to begin using myPKR.
+- **Protect baseline ownership.** Authenticated access, correct user isolation, source attribution, useful export and deletion controls are baseline product requirements rather than purchase-based restrictions. Do not imply self-service export or deletion controls already exist.
+- **Earn upgrades by usefulness.** Suggest optional integrations, synchronization or AI analysis when relevant to the owner's actions and declared preferences. Never imply that an upgrade grants consent to read new sources, transfer data, or use an external model. Do not inspect private record contents for marketing without separate opt-in.
+- **Be precise about availability.** Distinguish current owner-only functions from planned subscriptions, shared multi-user hosting, importing, dedicated vaults or independent deployment. An illustrative plan is not a paid subscription; an offered connection is not an authorized connection.
+- **Preserve freedom to leave.** A hosting or capability change must not erase or reclassify existing records, decisions or citations; source integrity, omissions and export status remain visible. Downgrade does not silently delete content.
+
+The current owner-only authorization and import gates stay in place until verified replacement access controls and cross-vault tests pass. This is a design requirement, not a deployment claim.
