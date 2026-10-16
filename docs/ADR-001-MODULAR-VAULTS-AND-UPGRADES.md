@@ -12,7 +12,7 @@
 
 ## 1. Context and why this decision exists
 
-The current repository documents a single confirmed owner, a read-only source archive, evidence-linked search, an opt-in Ask AI flow, and a controlled, offline ChatGPT importer. It does **not** yet have multi-client tenancy, a browser import pipeline, connector synchronization, subscriber billing, customer-managed vault provisioning, or independent-deployment handoff. The product version in \`package.json\` may differ from older prose in \`README.md\`; use the implemented code and tested deployment as the operational source of truth.
+The current repository documents a single confirmed owner, a read-only source archive, evidence-linked search, an opt-in Ask AI flow, and a controlled, offline ChatGPT importer. It does **not** yet have multi-client tenancy, a browser import pipeline, connector synchronization, subscriber billing, customer-managed vault provisioning, or independent-deployment handoff. The product version in `package.json` may differ from older prose in `README.md`; use the implemented code and tested deployment as the operational source of truth.
 
 The prior onboarding concept asks the customer to select Google and cloud-drive files, AI-platform exports, and other personal records. If myPKR ties one set of AI features to one infrastructure layout, either low-complexity users inherit unnecessary cloud administration or engaged users cannot grow without changing applications. We therefore separate **what users can do** from **where the record runs**.
 
@@ -20,7 +20,7 @@ This decision establishes target architecture and a delivery sequence. It does n
 
 ## 2. Decisions
 
-**D1. A vault is the portable unit of ownership.** Define a stable \`vault_id\` independent of email, plan, provider account, Supabase project, or storage path. Each vault has a separately scoped member policy, source registry, record revisions, provenance, decisions, connector grants, import state, retention controls, audit trail, and export manifest. Initially, one person may own one vault; the model must not assume permanent one-vault-per-Auth-account equivalence.
+**D1. A vault is the portable unit of ownership.** Define a stable `vault_id` independent of email, plan, provider account, Supabase project, or storage path. Each vault has a separately scoped member policy, source registry, record revisions, provenance, decisions, connector grants, import state, retention controls, audit trail, and export manifest. Initially, one person may own one vault; the model must not assume permanent one-vault-per-Auth-account equivalence.
 
 **D2. Two independent upgrade axes.** Capability bundles (Personal / Plus; later other bundles) are orthogonal to deployment profiles (Managed Shared / Managed Dedicated / Customer Operated). Customers can purchase features without moving data. Moving infrastructure must not force a capability purchase.
 
@@ -72,7 +72,7 @@ A dedicated project does not imply encryption against the operator. Customer-ope
 
 ## 4. Reference architecture (target, not deployed)
 
-\`\`\`text
+```text
 Web/PWA (myPKR UI; one design system)
   |-- Create my record / My sources / My record / Ask AI / My settings
   |
@@ -101,18 +101,18 @@ Identity & API boundary
   +--> Export & Migration Service --> checksum manifest / verify / cutover
 
 * Gmail access depends on scope restrictions, verification, and applicable security review.
-\`\`\`
+```
 
 The **control plane** manages identities, subscriptions, entitlement catalogs, provisioning requests, and deployment routing. The **data plane** holds the actual vault content, source objects, indexes, and privacy-controlled evidence. A dedicated-data deployment must not leak customer content into shared analytics, logs, or system support traces.
 
 ### Implementation interfaces (conceptual contracts)
 
-- \`VaultRepository\`: \`create\`, \`authorize\`, \`listRecords\`, \`getSource\`, \`saveRevision\`, \`export\`, \`requestDeletion\`. Methods require authenticated actor, effective vault, and permission context.
-- \`DeploymentResolver\`: resolves a vault to a server-controlled \`shared | dedicated\` backend configuration. Never accept a browser-supplied connection URL, schema, service key, or target tenant as authoritative.
-- \`ConnectorAdapter\`: \`startAuthorization\`, \`listSelectableItems\`, \`previewScope\`, \`importSelected\`, \`syncChanges\`, \`revoke\`. Each action checks user scope and connector entitlement.
-- \`Importer\`: \`inspect\`, \`prepare\`, \`reconcile\`, \`commit\`, \`receipt\`. Original data and derived passages remain distinguishable; runs are idempotent by verified source identity and revision.
-- \`EntitlementService\`: \`evaluate(actor, vault, capability, requestedUsage)\` yields \`allowed\`, denial reason, relevant quota and expiration; enforced before queued jobs and again at execution time.
-- \`AIProvider\`: bounded provider calls after evidence review and explicit user approval; provider/model/usage/cost receipt is recorded without putting private question text in operational logs.
+- `VaultRepository`: `create`, `authorize`, `listRecords`, `getSource`, `saveRevision`, `export`, `requestDeletion`. Methods require authenticated actor, effective vault, and permission context.
+- `DeploymentResolver`: resolves a vault to a server-controlled `shared | dedicated` backend configuration. Never accept a browser-supplied connection URL, schema, service key, or target tenant as authoritative.
+- `ConnectorAdapter`: `startAuthorization`, `listSelectableItems`, `previewScope`, `importSelected`, `syncChanges`, `revoke`. Each action checks user scope and connector entitlement.
+- `Importer`: `inspect`, `prepare`, `reconcile`, `commit`, `receipt`. Original data and derived passages remain distinguishable; runs are idempotent by verified source identity and revision.
+- `EntitlementService`: `evaluate(actor, vault, capability, requestedUsage)` yields `allowed`, denial reason, relevant quota and expiration; enforced before queued jobs and again at execution time.
+- `AIProvider`: bounded provider calls after evidence review and explicit user approval; provider/model/usage/cost receipt is recorded without putting private question text in operational logs.
 
 Provider integrations are replaceable modules, not vault ownership primitives. No AI vendor's account history, memory system, or login becomes the master record.
 
@@ -122,22 +122,22 @@ These are **logical entities**, not executable migrations or final table names.
 
 | Domain | Primary objects / essential fields |
 |---|---|
-| Identity | \`User\`, \`Vault\` (\`vault_id\`, owner, status), \`VaultMembership\` (actor, role, revoked_at) |
-| Deployment | \`VaultDeployment\` (\`vault_id\`, profile, data-plane reference, lifecycle state, version) |
-| Commercial | \`PlanCatalog\` (versioned offers), \`CapabilityCatalog\` (stable feature keys), \`VaultEntitlement\` (grant, limits, source, expires_at), \`UsageLedger\` (dedup key, units, status) |
-| Sources | \`Source\`, \`ConnectorAuthorization\` (scopes, token-secret reference, expiration/revocation), \`SourceSelection\` |
-| Ingestion | \`ImportJob\`, \`ImportReceipt\`, \`SourceManifest\` (hashes, file roles, completeness), \`RecordRevision\`, \`Passage\`, \`EvidenceLocator\` |
-| Knowledge | \`Decision\`, \`Correction\`, \`RecordRelationship\` (proposed / user-confirmed distinction) |
-| Operations | \`AuditEvent\` (actor, action, vault_id, outcome, timestamp, no raw record text), \`ConsentGrant\`, \`ExportJob\`, \`MigrationJob\` |
+| Identity | `User`, `Vault` (`vault_id`, owner, status), `VaultMembership` (actor, role, revoked_at) |
+| Deployment | `VaultDeployment` (`vault_id`, profile, data-plane reference, lifecycle state, version) |
+| Commercial | `PlanCatalog` (versioned offers), `CapabilityCatalog` (stable feature keys), `VaultEntitlement` (grant, limits, source, expires_at), `UsageLedger` (dedup key, units, status) |
+| Sources | `Source`, `ConnectorAuthorization` (scopes, token-secret reference, expiration/revocation), `SourceSelection` |
+| Ingestion | `ImportJob`, `ImportReceipt`, `SourceManifest` (hashes, file roles, completeness), `RecordRevision`, `Passage`, `EvidenceLocator` |
+| Knowledge | `Decision`, `Correction`, `RecordRelationship` (proposed / user-confirmed distinction) |
+| Operations | `AuditEvent` (actor, action, vault_id, outcome, timestamp, no raw record text), `ConsentGrant`, `ExportJob`, `MigrationJob` |
 
-Suggested stable feature keys: \`record.search\`, \`record.manual_import\`, \`record.export\`, \`record.delete\`, \`source.chatgpt_export\`, \`connector.google_drive\`, \`connector.gmail\`, \`connector.dropbox\`, \`connector.scheduled_sync\`, \`ai.ask\`, \`ai.cross_source\`, \`ai.model_choice\`, \`vault.dedicated\`, \`vault.customer_operated\`.
+Suggested stable feature keys: `record.search`, `record.manual_import`, `record.export`, `record.delete`, `source.chatgpt_export`, `connector.google_drive`, `connector.gmail`, `connector.dropbox`, `connector.scheduled_sync`, `ai.ask`, `ai.cross_source`, `ai.model_choice`, `vault.dedicated`, `vault.customer_operated`.
 
 The app must distinguish a user's **role** (who can do it), **entitlement** (what is available), **consent** (what has been explicitly permitted), and **usage quota** (how much may be done). These are four separate checks.
 
 ## 6. Required isolation / authorization design
 
-1. Never replace the current singleton check with \`role = authenticated\` alone. Every client endpoint must bind authenticated actor to an authorized \`vault_id\` and operation.
-2. For shared Supabase storage, apply row-level security and minimum grants to every exposed table; \`SELECT\`, \`INSERT\`, \`UPDATE\`, \`DELETE\` require purpose-specific access rules. Test old/new ownership state on updates. Do not derive policies from mutable \`user_metadata\`.
+1. Never replace the current singleton check with `role = authenticated` alone. Every client endpoint must bind authenticated actor to an authorized `vault_id` and operation.
+2. For shared Supabase storage, apply row-level security and minimum grants to every exposed table; `SELECT`, `INSERT`, `UPDATE`, `DELETE` require purpose-specific access rules. Test old/new ownership state on updates. Do not derive policies from mutable `user_metadata`.
 3. Apply independent storage-object RLS. Private buckets and unguessable object paths supplement—**not replace**—the permission check. Never write records or secrets to the Git repo, Netlify static assets, public Storage buckets, logs or analytics.
 4. Keep service credentials server-only; avoid a universal application service role in ordinary record reads. Privileged import/provisioning workers must take an independently verified vault target and audit every action.
 5. Prevent tenant injection through URLs, query params, search index, full-text/vector queries, background workers, caches, realtime channels, generated signed links, usage metering, export jobs, and restore/import paths.
@@ -157,15 +157,15 @@ Source: Supabase RLS and Storage access-control documentation, reviewed 2026-10-
 1. **Welcome / access:** create/sign into account, accept disclosures; start empty vault with unique ID and default Managed Shared deployment.
 2. **Choose my sources:** cards for Google (Drive/Docs and later eligible Gmail scopes), AI exports (ChatGPT, Claude, Gemini as format adapters become tested), cloud storage (Dropbox/OneDrive etc. only when implemented), and files. Distinguish "Connect account" (OAuth) from "Upload an export" (one-time file).
 3. **Select exact scope:** file/folder picker or import manifest preview; default selection is **not** the entire account. Display categories, sources, sensitivity and approximate size; allow deselection.
-4. **Approve & process:** consent/version receipt, permission scopes, processing boundary, optional AI disclosure. Durable import job reports \`queued > inspecting > importing > reconciling > review_ready > completed\`, plus \`partial / failed / cancelled\`; no unsupported "done" claim.
+4. **Approve & process:** consent/version receipt, permission scopes, processing boundary, optional AI disclosure. Durable import job reports `queued > inspecting > importing > reconciling > review_ready > completed`, plus `partial / failed / cancelled`; no unsupported "done" claim.
 5. **Review my record:** report actual indexed records, skipped attachments, unsupported content, decisions requiring user confirmation, and source coverage. Expose import receipts, reconciliation, exact sources and retriable errors.
 
 ### B. Engaged user — discover improvements without coercion
 
 - Contextual, opt-in suggestions: "Keep my selected sources updated", "Connect another archive", "Ask across my sources", "Move to a dedicated vault".
 - Compare current/next capability, estimated usage and exact additional cost **before** a purchase. Show whether a permission grant or data move is required.
-- Enabling \`ai.cross_source\` does not connect new accounts; upgrading connectors does not authorize reading previously unselected folders; dedicated deployment does not enable content inspection by support.
-- Mark \`Coming soon\` until actually shipped and verified; no inert purchase buttons or simulated account connections in production.
+- Enabling `ai.cross_source` does not connect new accounts; upgrading connectors does not authorize reading previously unselected folders; dedicated deployment does not enable content inspection by support.
+- Mark `Coming soon` until actually shipped and verified; no inert purchase buttons or simulated account connections in production.
 - "My plan and environment" shows capabilities, quotas, data location/profile, OAuth grants, import receipts, usage, cancellation, export and deletion controls.
 
 ### C. Downgrade / cancellation
@@ -184,9 +184,9 @@ Source: Supabase RLS and Storage access-control documentation, reviewed 2026-10-
 
 ## 9. Upgrade/migration state machine
 
-**Feature upgrade:** \`previewed -> customer_authorized -> payment_verified (if required) -> entitlement_active -> confirmed\`. Webhook delivery must be verified, signed, replay-safe and idempotent; payment events alone do not override membership, connector consent or record access.
+**Feature upgrade:** `previewed -> customer_authorized -> payment_verified (if required) -> entitlement_active -> confirmed`. Webhook delivery must be verified, signed, replay-safe and idempotent; payment events alone do not override membership, connector consent or record access.
 
-**Infrastructure upgrade:** \`requested -> quoted -> authorized -> provisioning -> secured -> snapshot_created -> copied -> reconciled -> user_review -> cutover -> verified -> settled\`; failures -> \`blocked\` or \`rolled_back\` with a durable audit receipt.
+**Infrastructure upgrade:** `requested -> quoted -> authorized -> provisioning -> secured -> snapshot_created -> copied -> reconciled -> user_review -> cutover -> verified -> settled`; failures -> `blocked` or `rolled_back` with a durable audit receipt.
 
 - Freeze or queue new writes at the final consistency boundary; enumerate source objects, receipts, record counts, hashes, decisions, deletes/tombstones and active grants.
 - Copy to the destination and independently reconcile content plus authorization negatives. Provisioning success is not data-migration success.
@@ -199,7 +199,7 @@ Source: Supabase RLS and Storage access-control documentation, reviewed 2026-10-
 
 - Meter billable workload on the server by vault and work type: stored bytes, import processing, AI input/output tokens, scheduled sync calls, background jobs, dedicated compute, bandwidth and backup.
 - Distinguish infrastructure pass-through cost from capability value. Avoid committing to prices until a pilot captures per-vault real usage and support cost.
-- Use a versioned \`PlanCatalog\`, a monotonic/append-only usage ledger, tested webhook replay handling, account credits and clear metering receipts. No client-side plan flags as source of truth.
+- Use a versioned `PlanCatalog`, a monotonic/append-only usage ledger, tested webhook replay handling, account credits and clear metering receipts. No client-side plan flags as source of truth.
 - Never charge users to perform a baseline data export or to close their account. Larger transfer bandwidth could be governed by reasonable published limits, without trapping a user's record.
 - Customer-operated deployments require explicit scope for backups, incident response, updates, OAuth configuration, vendor costs, and support; independence does not promise zero maintenance.
 
@@ -223,9 +223,9 @@ Source: Supabase RLS and Storage access-control documentation, reviewed 2026-10-
 - **SEC-002:** Implement a server-only vault context resolver and define RLS/Storage tests with two synthetic owners; add runtime restrictions for cross-vault caches/jobs/search/AI.
 - **DATA-003:** Specify canonical portable vault format (manifest JSON schema, source hashes, revisions, tombstones, verification report) with a non-sensitive fixture.
 - **IMPORT-004:** Design secure file/upload staging plus durable job state and receipt API before integrating any provider OAuth.
-- **ENT-005:** Create feature catalog and entitlement evaluation contract; seed baseline rights and read-only \`GET my capabilities\` UI before integrating billing.
+- **ENT-005:** Create feature catalog and entitlement evaluation contract; seed baseline rights and read-only `GET my capabilities` UI before integrating billing.
 - **BILL-006:** Select payment provider, pricing, lifecycle events and cancellation logic only after representative usage costs and legal/privacy terms are reviewed.
-- **UX-007:** Implement the 5-step guided source selection/onboarding wizard using accurate \`available\` / \`planned\` markers.
+- **UX-007:** Implement the 5-step guided source selection/onboarding wizard using accurate `available` / `planned` markers.
 - **MIG-008:** Build a dry-run shared -> dedicated migration simulator and checksummed sample export/restore.
 - **TEST-009:** Build permission-denial fixtures for two vaults, expired subscriptions, revoked connectors, deleted documents, AI approval changes and failed uploads.
 
@@ -248,6 +248,6 @@ Source: Supabase RLS and Storage access-control documentation, reviewed 2026-10-
 
 ## 15. Source-of-truth and change control
 
-Read alongside \`docs/DESIGN.md\`, \`docs/CHATGPT_IMPORT.md\`, \`docs/AI_ANSWERS.md\` and \`AGENTS.md\`. Those documents describe **existing boundaries**; this ADR adds future requirements but does not override deployed security gates. Implementation requires specific schema migrations, scoped permissions, local tests and production validation. Update this ADR and implementation tickets if new evidence changes feasibility.
+Read alongside `docs/DESIGN.md`, `docs/CHATGPT_IMPORT.md`, `docs/AI_ANSWERS.md` and `AGENTS.md`. Those documents describe **existing boundaries**; this ADR adds future requirements but does not override deployed security gates. Implementation requires specific schema migrations, scoped permissions, local tests and production validation. Update this ADR and implementation tickets if new evidence changes feasibility.
 
 **Decision summary:** One myPKR product, portable personal vaults, modular feature entitlements, default managed hosting, optional dedicated/customer-operated infrastructure, and a strictly verified path between them.
